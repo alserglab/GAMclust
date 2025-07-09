@@ -1,6 +1,6 @@
 ---
 title: 'GAM-clustering Tutorial Notebook For Reanalysis Of [ImmGen Open Source](http://artyomovlab.wustl.edu/immgen-met/) Bulk RNA-Seq Data'
-date: 2025/05/06
+date: 2025/05/07
 output:
   html_document:
     df_print: paged
@@ -74,14 +74,21 @@ met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclus
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package, 
 
-```{r}
+```{r, eval = FALSE}
 solver <- mwcsr::rnc_solver()
 ```
 
 (4.2.) either proprietary [CPLEX solver](https://www.ibm.com/products/ilog-cplex-optimization-studio) (free for academy);
 
 ```{r, eval = FALSE}
-cplex.dir <- "/opt/ibm/ILOG/CPLEX_Studio1271"
+cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
+```
+
+```{r, include=FALSE}
+cplex.dir <-  "/nfs/home/againullina/lib/sgmwcs/private-libraries/CPLEX_Studio1271"
+```
+
+```{r}
 solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 ```
 
@@ -99,8 +106,19 @@ stats.dir <- file.path(work.dir, "stats")
 dir.create(stats.dir, showWarnings = F, recursive = T)
 
 log.file <- file.path(stats.dir, "log.txt")
-flog.appender(appender.file(log.file), name = "stats.logger")
-flog.threshold(TRACE, name = "stats.logger")
+setup_logger(log.file.path = log.file, logger.name = "stats.logger")
+
+
+setup_logger <- function(log.file.path, logger.name = "stats.logger") {
+  file.appender <- appender.file(log.file.path)
+  console.appender <- appender.console()
+  combined.appender <- function(line) {
+    file.appender(line)
+    console.appender(line)
+  }
+  flog.appender(combined.appender, name = logger.name)
+  flog.threshold(TRACE, name = logger.name)
+}
 ```
 
 ### Preparing objects for the analysis
@@ -201,7 +219,7 @@ results <- gamClustering(E.prep = E.prep,
                          batch.solver = seq_batch_solver(solver),
                          work.dir = work.dir,
                          
-                         show.intermediate.clustering = T,
+                         show.intermediate.clustering = F,
                          verbose = T,
                          collect.stats = T)
 ```

@@ -1,6 +1,6 @@
 ---
 title: 'GAM-clustering Tutorial Notebook For Reanalysis Of [Metabolic Tabula Muris Senis](http://artyomovlab.wustl.edu/immgen-met/) Single Cell RNA-Seq Data'
-date: 2023/09/29
+date: 2025/05/07
 output:
   html_document:
     df_print: paged
@@ -25,9 +25,9 @@ if (!require("devtools", quietly = TRUE))
     install.packages("BiocManager")
 
 devtools::install_github("ctlab/GAMclust")
-devtools::install_github("ctlab/gatom")
-devtools::install_github("ctlab/mwcsr")
-devtools::install_github("ctlab/fgsea")
+BiocManager::install("gatom")
+BiocManager::install("mwcsr")
+BiocManager::install("fgsea")
 ```
 
 ```{r, message=FALSE}
@@ -37,6 +37,7 @@ library(mwcsr)
 library(fgsea)
 library(data.table)
 library(Seurat)
+library(futile.logger)
 
 set.seed(42)
 ```
@@ -68,13 +69,13 @@ met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclus
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package, 
 
-```{r}
+```{r, eval = FALSE}
 solver <- mwcsr::rnc_solver()
 ```
 
 (4.2.) either proprietary [CPLEX solver](https://www.ibm.com/products/ilog-cplex-optimization-studio) (free for academy);
 
-```{r}
+```{r, eval = FALSE}
 cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
@@ -95,13 +96,13 @@ dir.create(work.dir, showWarnings = F, recursive = T)
 
 (6) TEMPORARY: collecting logs while developing the tool.
 
-```{r}
-stats.dir <- paste0(work.dir, "/stats")
+```{r, message = F, warning = F, results = "hide"}
+stats.dir <- file.path(work.dir, "stats")
 dir.create(stats.dir, showWarnings = F, recursive = T)
 
-log_file <- file(paste0(stats.dir, "/log.txt"), open = "wt")
-sink(log_file, type = "output", append = TRUE)
-sink(log_file, type = "message", append = TRUE)
+log.file <- file.path(stats.dir, "log.txt")
+flog.appender(appender.file(log.file), name = "stats.logger")
+flog.threshold(TRACE, name = "stats.logger")
 ```
 
 ### Preparing objects for the analysis
@@ -252,7 +253,7 @@ m.gene.list <- getGeneTables(modules = results$modules,
 Example of the gene table of the third module:
 
 ```{r}
-head(GAMclust:::read.tsv(paste0(work.dir, "/m.3.genes.tsv")))
+head(GAMclust:::read.tsv(file.path(work.dir, "m.3.genes.tsv")))
 ```
 
 ##### Get plots of patterns:
@@ -297,7 +298,7 @@ getAnnotationTables(network.annotation = network.annotation,
 Example of the annotation table of the third module:
 
 ```{r}
-head(GAMclust:::read.tsv(paste0(work.dir, "/m.3.pathways.tsv")))
+head(GAMclust:::read.tsv(file.path(work.dir, "m.3.pathways.tsv")))
 ```
 
 Annotation heatmap for all modules:
