@@ -32,7 +32,7 @@ prepareData <- function(
     if(gene.id.type %in% names(network.annotation$mapFrom)){
       
       rownames.dubl <- network.annotation$mapFrom[[gene.id.type]][rownames(E)]
-      rownames(E) <- rownames.dubl[!duplicated(rownames.dubl[[gene.id.type]]), ]$gene
+      rownames(E) <- rownames.dubl$gene
       
     } else {
       valid.types.string <- paste(c(names(network.annotation$mapFrom), "Entrez"), collapse = ", ")
