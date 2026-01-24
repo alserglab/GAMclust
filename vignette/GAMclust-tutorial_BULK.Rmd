@@ -1,9 +1,22 @@
 ---
 title: 'GAM-clustering Tutorial Notebook For Reanalysis Of [ImmGen Open Source](http://artyomovlab.wustl.edu/immgen-met/) Bulk RNA-Seq Data'
-date: 2025/05/07
 output:
   html_document:
     df_print: paged
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true,breakanywhere=true,commandchars=\\\{\}}
+  - \RecustomVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true,breakanywhere=true}
+  - \usepackage{seqsplit}
+  - \let\oldStringTok\StringTok
+  - \renewcommand{\StringTok}[1]{\oldStringTok{\seqsplit{#1}}}
+  - \usepackage{titlesec}
+  - \titleformat{\paragraph}[block]{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+  - \titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+  - \titleformat{\subparagraph}[block]{\normalfont\normalsize\bfseries}{\thesubparagraph}{1em}{}
+  - \titlespacing*{\subparagraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
 editor_options: 
   markdown: 
     wrap: 72
@@ -18,19 +31,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-Required packages to be installed:
+Install GAMclust package:
 
 ```{r, eval=FALSE}
-if (!require("devtools", quietly = TRUE))
-    install.packages("BiocManager")
-
-devtools::install_github("ctlab/GAMclust")
-BiocManager::install("gatom")
-BiocManager::install("mwcsr")
-BiocManager::install("fgsea")
+devtools::install_github("alserglab/GAMclust")
 ```
 
-```{r, message=FALSE}
+```{r, setup, message=FALSE}
 library(GAMclust)
 library(gatom)
 library(mwcsr)
@@ -45,13 +52,19 @@ set.seed(42)
 
 First, please load and initialize all objects required for GAM-clustering analysis:
 
-(1) load [KEGG](https://www.genome.jp/kegg/) metabolic network [`network.kegg.rds`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.kegg.rds) and its metabolites annotation [`met.kegg.db.rds`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.kegg.db.rds);
+(1) load metabolic network and its metabolites annotation. We provide two networks: [KEGG](https://www.genome.jp/kegg/) and combined network that includes [KEGG](https://www.genome.jp/kegg/), [Rhea](https://www.rhea-db.org/) and transport reactions:
 
-```{r}
+(1.1.) load [KEGG](https://www.genome.jp/kegg/) metabolic network [`network.kegg.rds`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.kegg.rds) and its metabolites annotation [`met.kegg.db.rds`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.kegg.db.rds)
+
+```{r, kegg-network}
 # KEGG network:
 network <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.kegg.rds"))
 metabolites.annotation <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.kegg.db.rds"))
+```
 
+(1.2.) or load combined metabolic network [`network.combined.rds`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.combined.rds), its metabolites annotation [`met.combined.db.rds`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.combined.db.rds) and species-specific list of genes that either come from proteome or are not linked to a specific enzyme [`gene2reaction.combined.mmu.eg.tsv`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.combined.mmu.eg.tsv) for mouse and  [`gene2reaction.combined.hsa.eg.tsv`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/gene2reaction.combined.hsa.eg.tsv) for human data;
+
+```{r, combined-network}
 # combined network (KEGG+Rhea+transport reactions):
 network <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/network.combined.rds"))
 metabolites.annotation <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/met.combined.db.rds"))
@@ -60,13 +73,13 @@ gene2reaction.extra <- data.table::fread("http://artyomovlab.wustl.edu/publicati
 
 (2) load species-specific network annotation: [`org.Hs.eg.gatom.anno`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Hs.eg.gatom.anno.rds) for human data or [`org.Mm.eg.gatom.anno`](http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Mm.eg.gatom.anno.rds) for mouse data;
 
-```{r}
+```{r, network-anno}
 network.annotation <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GATOM/org.Mm.eg.gatom.anno.rds"))
 ```
 
 (3) load provided list of metabolites that should not be considered during the analysis as connections between reactions (e.g., CO2, HCO3-, etc);
 
-```{r}
+```{r, met-to-filter}
 met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclust"))$ID
 ```
 
@@ -74,40 +87,36 @@ met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclus
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package, 
 
-```{r, eval = FALSE}
+```{r, rnc_solver, eval = FALSE}
 solver <- mwcsr::rnc_solver()
 ```
 
 (4.2.) either proprietary [CPLEX solver](https://www.ibm.com/products/ilog-cplex-optimization-studio) (free for academy);
 
-```{r, eval = FALSE}
+```{r, cplex-dir}
 cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
 ```{r, include=FALSE}
-cplex.dir <-  "/nfs/home/againullina/lib/sgmwcs/private-libraries/CPLEX_Studio1271"
+if (file.exists("cplex_path.R")) source("cplex_path.R") 
 ```
 
-```{r}
+```{r, virgo_solver}
 solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 ```
 
 (5) set working directory where the results will be saved to.
 
-```{r}
+```{r, work-dir}
 work.dir <- "results"
 dir.create(work.dir, showWarnings = F, recursive = T)
 ```
 
 (6) TEMPORARY: collecting logs while developing the tool.
 
-```{r, message = F, warning = F, results = "hide"}
+```{r, stats, message = F, warning = F, results = "hide"}
 stats.dir <- file.path(work.dir, "stats")
 dir.create(stats.dir, showWarnings = F, recursive = T)
-
-log.file <- file.path(stats.dir, "log.txt")
-setup_logger(log.file.path = log.file, logger.name = "stats.logger")
-
 
 setup_logger <- function(log.file.path, logger.name = "stats.logger") {
   file.appender <- appender.file(log.file.path)
@@ -119,6 +128,9 @@ setup_logger <- function(log.file.path, logger.name = "stats.logger") {
   flog.appender(combined.appender, name = logger.name)
   flog.threshold(TRACE, name = logger.name)
 }
+
+log.file <- file.path(stats.dir, "log.txt")
+setup_logger(log.file.path = log.file, logger.name = "stats.logger")
 ```
 
 ### Preparing objects for the analysis
@@ -133,7 +145,7 @@ Let's load the data.
 
 For bulk RNA-seq cell data, take 12,000-15,000 genes for the GAM-clustering analysis. 
 
-```{r}
+```{r, data-load}
 expression_set_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/243_es.top12k.rds"))
 
 E <- Biobase::exprs(expression_set_object)
@@ -149,7 +161,6 @@ Genes in your dataset may be named as Symbol, Entrez, Ensembl or RefSeq IDs. One
 E.prep <- prepareData(E = E,
                       gene.id.type = "Symbol",
                       use.PCA = FALSE,
-                      use.PCA.n = 50,
                       network.annotation = network.annotation)
 
 E.prep[1:3, 1:3]
@@ -165,7 +176,7 @@ network.prep <- prepareNetwork(E = E.prep,
                                topology = "metabolites",
                                met.to.filter = met.to.filter,
                                network.annotation = network.annotation,
-                               gene2reaction.extra = gene2reaction.extra)
+                               gene2reaction.extra = gene2reaction.extra) # for combined network
 ```
 
 #### Preclustering
@@ -174,7 +185,7 @@ The `preClustering()` function defines initial patterns using k-medoids clusteri
 
 You can visualize the initial heatmap as shown below.
 
-```{r, fig.width=20, fig.height=7}
+```{r, pre-clustering, fig.width=35, fig.height=7}
 cur.centers <- preClustering(E.prep = E.prep,
                              network.prep = network.prep,
                              initial.number.of.clusters = 32,
@@ -204,7 +215,7 @@ There is a set of parameters which determine the size and number of your final m
 
 3. If among final modules you consider presence of any uninformative modules, you can reduce by 10 times the `p.adj.val.threshold` parameter. 
 
-```{r, message=FALSE, error=FALSE}
+```{r, gam-clustering, message=FALSE, error=FALSE}
 results <- gamClustering(E.prep = E.prep,
                          network.prep = network.prep,
                          cur.centers = cur.centers,
@@ -213,7 +224,7 @@ results <- gamClustering(E.prep = E.prep,
                          base.dec = 0.05,
                          max.module.size = 50,
 
-                         cor.threshold = 0.8,
+                         cor.threshold = 0.7,
                          p.adj.val.threshold = 1e-5,
 
                          batch.solver = seq_batch_solver(solver),
@@ -232,7 +243,7 @@ The following functions will help you to visualize and explore the obtained resu
 
 ##### Get graphs of modules:
 
-```{r}
+```{r, get-graphs}
 getGraphs(modules = results$modules,
           network.annotation = network.annotation,
           metabolites.annotation = metabolites.annotation,
@@ -242,8 +253,8 @@ getGraphs(modules = results$modules,
 
 Example of the graph of the first module:
 
-```{r, results='asis', echo=FALSE} 
-cat(sprintf('<img src="%s/m.1.svg" style="width:90%%; height:auto;" />', work.dir))
+```{r, out.width="80%", echo=FALSE, fig.align='center'} 
+knitr::include_graphics(sprintf("%s/m.1.svg", work.dir))
 ```
 
 ##### Get gene tables:
@@ -251,7 +262,7 @@ cat(sprintf('<img src="%s/m.1.svg" style="width:90%%; height:auto;" />', work.di
 The table contains gene list. Each gene has two descriptive values: i) gene's correlation value with the modules pattern and ii) gene's score.
 High score means that this gene's expression is similar to the module's pattern and not similar to other modules' patterns.
 
-```{r}
+```{r, get-tables}
 m.gene.list <- getGeneTables(modules = results$modules,
                              nets = results$nets,
                              patterns = results$patterns.pos,
@@ -263,14 +274,27 @@ m.gene.list <- getGeneTables(modules = results$modules,
 Example of the gene table of the first module:
 
 ```{r}
-head(GAMclust:::read.tsv(file.path(work.dir, "m.1.genes.tsv")))
+head(GAMclust:::read.tsv(file.path(work.dir, "m.1.genes.tsv"))) |>
+  kableExtra::kable() |>
+  kableExtra::kable_styling()
 ```
 
 ##### Get plots of patterns and individual genes expression:
 
-```{r}
+Heatmap for patterns of all modules:
+
+```{r, plot-patterns, fig.width=35, fig.height=7}
 patterns <- results$patterns.pos
 
+pheatmap::pheatmap(
+  GAMclust:::normalize.rows(patterns),
+  cluster_rows=F, cluster_cols=F,
+  show_rownames=T, show_colnames=T)
+```
+
+Get plots of individual genes expression
+
+```{r, plot-genes}
 for (i in seq_along(m.gene.list)) {
 
   heatmap <- E[m.gene.list[[i]], , drop=F]
@@ -286,26 +310,18 @@ for (i in seq_along(m.gene.list)) {
 
 Example of the heatmap of the first module:
 
-```{r, fig.width=20, fig.height=7}
+```{r, fig.width=35, fig.height=7}
 pheatmap::pheatmap(
   GAMclust:::normalize.rows(E[m.gene.list[[1]], , drop=F]),
   show_rownames=T, show_colnames=T)
 ```
 
-Heatmap for patterns of all modules:
-
-```{r, fig.width=20, fig.height=7}
-pheatmap::pheatmap(
-  GAMclust:::normalize.rows(patterns),
-  cluster_rows=F, cluster_cols=F,
-  show_rownames=T, show_colnames=T)
-```
 
 ##### Get annotation tables and annotation heatmap for all modules:
 
 Functional annotation of obtained modules is done based on KEGG and Reactome canonical metabolic pathways.
 
-```{r}
+```{r, get-anno-tables}
 getAnnotationTables(network.annotation = network.annotation,
                     nets = results$nets,
                     work.dir = work.dir)
@@ -314,12 +330,17 @@ getAnnotationTables(network.annotation = network.annotation,
 Example of the annotation table of the first module:
 
 ```{r}
-head(GAMclust:::read.tsv(file.path(work.dir, "m.1.pathways.tsv")))
+head(GAMclust:::read.tsv(file.path(work.dir, "m.1.pathways.tsv"))) |>
+  kableExtra::kable() |>
+  kableExtra::kable_styling(font_size = 8) |>
+  kableExtra::column_spec(1, width = "1.6in") |>
+  kableExtra::column_spec(2:6, width = "0.5in") |>
+  kableExtra::column_spec(7, width = "1.2in")
 ```
 
 Annotation heatmap for all modules:
 
-```{r, fig.width=20, fig.height=13}
+```{r, plot-anno, fig.width=15, fig.height=8}
 getAnnotationHeatmap(work.dir = work.dir)
 ```
 
