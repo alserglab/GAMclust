@@ -88,7 +88,7 @@ doGeseca <- function(E.prep,
   gesecaRes
 }
 
-ulength <- pryr::compose(length, unique)
+ulength <- function(x) length(unique(x))
 
 zScore <- function(x) {
   x.means <- apply(x, 1, mean, na.rm=T)
