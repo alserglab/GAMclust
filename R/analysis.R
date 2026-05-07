@@ -494,7 +494,16 @@ gamClustering <- function(E.prep,
                         scale = FALSE,
                         center = FALSE,
                         verbose = verbose)
-  modules <- modules[as.numeric(gsub("c.pos", "", gesecaRes$pathway))]
+  
+  order_idx <- as.numeric(gsub("c.pos", "", gesecaRes$pathway))
+  
+  modules <- modules[order_idx]
+  nets_attr <- nets_attr[order_idx]
+  rev$centers.pos <- rev$centers.pos[order_idx, , drop = FALSE]
+  rownames(rev$centers.pos) <- paste0("c.pos", 1:nrow(rev$centers.pos)) 
+  rev$centers.all <- rev$centers.all[order_idx, , drop = FALSE]
+  rownames(rev$centers.all) <- paste0("c.all", 1:nrow(rev$centers.all))  
+  
   gesecaRes$pathway <- paste0("m", 1:nrow(gesecaRes)) 
 
   saveStats(work.dir, rev, gesecaRes, iter.stats)
