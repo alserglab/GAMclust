@@ -13,7 +13,12 @@ test_that("Pipeline works for bulk data", {
   work.dir <- file.path(tempdir(), "testGAMclustering")
   dir.create(work.dir, showWarnings = F)
   
-  cplex.dir <- "/opt/ibm/ILOG/CPLEX_Studio1271"
+  cplex.dir <- Sys.getenv("CPLEX_HOME")
+  
+  if (cplex.dir == "") {
+    cplex.dir <- NULL # using MST heuristic, no CPLEX
+  }
+  
   solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 
   E.prep <- prepareData(E = Biobase::exprs(data.good),

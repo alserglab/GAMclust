@@ -98,6 +98,7 @@ cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
 ```{r, include=FALSE}
+cplex.dir <- Sys.getenv("CPLEX_HOME")
 if (file.exists("cplex_path.R")) source("cplex_path.R") 
 ```
 

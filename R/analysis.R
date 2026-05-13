@@ -7,7 +7,7 @@
 #' @param repeats Here you may collapse biological replicas by providing vector with repeated sample names
 #' @param network.annotation Metabolic network annotation.
 #' @return Expression matrix prepared for the analysis.
-#' @import data.table
+#' @import data.table futile.logger
 #' @export
 prepareData <- function(
     E,

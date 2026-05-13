@@ -41,7 +41,7 @@ gamClustering(
 
 \item{work.dir}{Working directory where results should be saved.}
 
-\item{show.intermediate.clustering}{Whether to show or not heatmap of intermideate clusters.}
+\item{show.intermediate.clustering}{Whether to show or not heatmap of intermediate clusters.}
 
 \item{verbose}{Verbose running.}
 

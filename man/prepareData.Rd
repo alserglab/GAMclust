@@ -21,7 +21,7 @@ prepareData(
 
 \item{keep.top.genes}{Which top of the most expressed genes to keep for the further analysis.}
 
-\item{use.PCA}{Whether to reduce matrix dimentionality by PCA or not.}
+\item{use.PCA}{Whether to reduce matrix dimensionality by PCA or not.}
 
 \item{repeats}{Here you may collapse biological replicas by providing vector with repeated sample names}
 

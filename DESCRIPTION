@@ -41,7 +41,8 @@ Imports:
     limma,
     mwcsr (>= 0.1.11),
     irlba,
-    pheatmap
+    pheatmap,
+    futile.logger,
 Suggests:
     AnnotationDbi,
     org.Mm.eg.db,
@@ -51,12 +52,11 @@ Suggests:
     Rgraphviz,
     rsvg,
     testthat,
-    futile.logger,
     knitr
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 URL: https://github.com/alserglab/GAMclust
 BugReports: https://github.com/alserglab/GAMclust/issues
+Config/roxygen2/version: 8.0.0

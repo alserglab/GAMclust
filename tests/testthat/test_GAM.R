@@ -55,9 +55,14 @@ test_that("preClustering works", {
 
 
 
-test_that("gamClustering works with CPLEX", {
+test_that("gamClustering works with Virgo solver", {
 
-  cplex.dir <- "/opt/ibm/ILOG/CPLEX_Studio1271"
+  cplex.dir <- Sys.getenv("CPLEX_HOME")
+  
+  if (cplex.dir == "") {
+    cplex.dir <- NULL # using MST heuristic, no CPLEX
+  }
+  
   solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 
   cur.centers <- preClustering(E.prep = E.prep,

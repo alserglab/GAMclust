@@ -10,7 +10,8 @@ prepareNetwork(
   topology = c("metabolites", "atoms"),
   met.to.filter = data.table::fread(system.file("mets2mask.lst", package =
     "GAMclust"))$ID,
-  network.annotation
+  network.annotation,
+  gene2reaction.extra = NULL
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ prepareNetwork(
 \item{met.to.filter}{Metabolites that should not be used as connections in the module.}
 
 \item{network.annotation}{Metabolic network annotation.}
+
+\item{gene2reaction.extra}{For a combined network: supplementary file with genes that either come from proteome or are not linked to a specific enzyme.}
 }
 \value{
 Edges of the final network.
