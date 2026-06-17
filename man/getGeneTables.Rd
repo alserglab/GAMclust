@@ -36,5 +36,11 @@ m.*.complete.genes.tsv -- top 300 of all genes sorted by correlation value.
 Results of this function can be seen in work.dir (three .tsv files for each module with gene lists).
 }
 \description{
-Get files with modules' genes
+Generates gene-level summaries for each identified metabolic module.
+The function exports tables containing module genes, positively scored
+genes that were not selected into the final module, and the top correlated
+genes from the complete expression dataset.
+Each table includes gene identifiers, symbols, module scores, and
+correlations with module expression patterns. These outputs provide a
+detailed view of the transcriptional composition of every module.
 }

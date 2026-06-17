@@ -8,9 +8,9 @@ Interactive results of GAM-clustering analysis of ImmGen Open Source and Tabula 
 
 # Installation
 
-`GAMclust` package can be insttalled from GitHub:
+`GAMclust` package can be installed from GitHub:
 
-```{r, eval=FALSE}
+```
 devtools::install_github("alserglab/GAMclust")
 ```
 

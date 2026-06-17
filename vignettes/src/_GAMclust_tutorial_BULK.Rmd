@@ -1,5 +1,5 @@
 ---
-title: 'GAM-clustering Tutorial Notebook For Reanalysis Of [Metabolic Tabula Muris Senis](http://artyomovlab.wustl.edu/immgen-met/) Single Cell RNA-Seq Data'
+title: 'GAM-clustering Tutorial Notebook For Reanalysis Of [ImmGen Open Source](http://artyomovlab.wustl.edu/immgen-met/) Bulk RNA-Seq Data'
 output:
   html_document:
     df_print: paged
@@ -43,7 +43,6 @@ library(gatom)
 library(mwcsr)
 library(fgsea)
 library(data.table)
-library(Seurat)
 library(futile.logger)
 
 set.seed(42)
@@ -88,17 +87,18 @@ met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclus
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package, 
 
-```{r, rnc_solver, eval = FALSE}
+```{r, rnc_solver, eval=FALSE}
 solver <- mwcsr::rnc_solver()
 ```
 
 (4.2.) either proprietary [CPLEX solver](https://www.ibm.com/products/ilog-cplex-optimization-studio) (free for academy);
 
 ```{r, cplex-dir}
-cplex.dir <- "/opt/ibm/ILOG/CPLEX_Studio1271"
+cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
-```{r, include=FALSE}
+```{r, include=FALSE, eval=FALSE}
+cplex.dir <- Sys.getenv("CPLEX_HOME")
 if (file.exists("cplex_path.R")) source("cplex_path.R") 
 ```
 
@@ -140,39 +140,28 @@ setup_logger(log.file.path = log.file, logger.name = "stats.logger")
 
 GAMclust works with bulk, single cell and spatial RNA-seq data.
 
-This vignette shows how to process single cell RNA-seq data on the example of [Tabula Muris Senis](http://artyomovlab.wustl.edu/immgen-met/) data reanalysis.
+This vignette shows how to process bulk RNA-seq data on the example of [ImmGen Open Source](http://artyomovlab.wustl.edu/immgen-met/) data reanalysis.
 
-For single cell data, take 6,000-12,000 genes for the GAM-clustering analysis. 
-To do this while [preprocessing data with Seurat pipeline](https://satijalab.org/seurat/articles/sctransform_vignette), set `variable.features.n = 12000` in `SCTransform()` function.
-In case of [preprocessing multi-sample data](https://satijalab.org/seurat/articles/integration_introduction), set `nfeatures=12000` in `SelectIntegrationFeatures()`).
+Let's load the data. 
 
-Let's load already preprocessed data.
+For bulk RNA-seq cell data, take 12,000-15,000 genes for the GAM-clustering analysis. 
 
-```{r, include=FALSE}
-options(timeout=7000)
-```
+```{r, data-load}
+expression_set_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/243_es.top12k.rds"))
 
-```{r, data-load, message=FALSE, error=FALSE}
-seurat_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/tms12k.rds"))
+E <- Biobase::exprs(expression_set_object)
 
-E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
-                                    assay = "SCT",
-                                    slot = "scale.data"))
-
-nrow(E) # ! make sure this value is in range from 6,000 to 12,000
+nrow(E) # ! make sure this value is in range from 10,000 to 15,000
 
 E[1:3, 1:3]
 ```
 
 Genes in your dataset may be named as Symbol, Entrez, Ensembl or RefSeq IDs. One of these names should be specified as value of `gene.id.type` parameter in `prepareData()`. 
 
-If you analyse singe cell or spatial RNA-seq data, please set `use.PCA=TRUE` in `prepareData()`.
-
-```{r, prepara-data}
+```{r}
 E.prep <- prepareData(E = E,
                       gene.id.type = "Symbol",
-                      use.PCA = TRUE,
-                      use.PCA.n = 50,
+                      use.PCA = FALSE,
                       network.annotation = network.annotation)
 
 E.prep[1:3, 1:3]
@@ -182,7 +171,7 @@ E.prep[1:3, 1:3]
 
 The `prepareNetwork()` function defines the structure of the final metabolic modules. 
 
-```{r, prepare-network}
+```{r}
 network.prep <- prepareNetwork(E = E.prep,
                                network = network,
                                topology = "metabolites",
@@ -197,7 +186,7 @@ The `preClustering()` function defines initial patterns using k-medoids clusteri
 
 You can visualize the initial heatmap as shown below.
 
-```{r, pre-clustering, fig.width=20, fig.height=7}
+```{r, pre-clustering, fig.width=35, fig.height=7}
 cur.centers <- preClustering(E.prep = E.prep,
                              network.prep = network.prep,
                              initial.number.of.clusters = 32,
@@ -221,7 +210,7 @@ Note, that it may take a long time to derive metabolic modules by `gamClustering
 
 There is a set of parameters which determine the size and number of your final modules. We recommend you to start with the default settings, however you can adjust them based on your own preferences:
 
-1. If you consider final modules to bee too small or too big and it complicates interpretation for you, you can either increase or reduce by 10 units the `max.module.size` parameter. 
+1. If you consider final modules to be too small or too big and it complicates interpretation for you, you can either increase or reduce by 10 units the `max.module.size` parameter. 
 
 2. If among final modules you consider presence of any modules with too similar patterns, you can reduce by 0.1 units the `cor.threshold` parameter. 
 
@@ -236,15 +225,15 @@ results <- gamClustering(E.prep = E.prep,
                          base.dec = 0.05,
                          max.module.size = 50,
 
-                         cor.threshold = 0.8,
+                         cor.threshold = 0.7,
                          p.adj.val.threshold = 1e-5,
 
                          batch.solver = seq_batch_solver(solver),
                          work.dir = work.dir,
                          
-                         show.intermediate.clustering = FALSE,
-                         verbose = FALSE,
-                         collect.stats = TRUE)
+                         show.intermediate.clustering = F,
+                         verbose = T,
+                         collect.stats = T)
 ```
 
 ### Visualizing and exploring the GAM-clustering results
@@ -263,10 +252,10 @@ getGraphs(modules = results$modules,
           work.dir = work.dir)
 ```
 
-Example of the graph of the third module:
+Example of the graph of the first module:
 
 ```{r, out.width="80%", echo=FALSE, fig.align='center'} 
-knitr::include_graphics(sprintf("%s/m.3.svg", work.dir))
+knitr::include_graphics(sprintf("%s/m.1.svg", work.dir))
 ```
 
 ##### Get gene tables:
@@ -283,45 +272,53 @@ m.gene.list <- getGeneTables(modules = results$modules,
                              work.dir = work.dir)
 ```
 
-Example of the gene table of the third module:
+Example of the gene table of the first module:
 
 ```{r}
-head(GAMclust:::read.tsv(file.path(work.dir, "m.3.genes.tsv"))) |>
+head(GAMclust:::read.tsv(file.path(work.dir, "m.1.genes.tsv"))) |>
   kableExtra::kable() |>
   kableExtra::kable_styling()
 ```
 
-##### Get plots of patterns:
+##### Get plots of patterns and individual genes expression:
 
-```{r, figures-side, fig.show="hold", out.width="50%", results="hide"}
-for(i in 1:length(m.gene.list)){
-  
-  print(fgsea::plotCoregulationProfileReduction(m.gene.list[[i]], 
-                                               seurat_object, 
-                                               title = paste0("module ", i),
-                                               raster = TRUE,
-                                               reduction = "pumap"))
+Heatmap for patterns of all modules:
+
+```{r, plot-patterns, fig.width=35, fig.height=7}
+patterns <- results$patterns.pos
+
+pheatmap::pheatmap(
+  GAMclust:::normalize.rows(patterns),
+  cluster_rows=F, cluster_cols=F,
+  show_rownames=T, show_colnames=T)
+```
+
+Get plots of individual genes expression
+
+```{r, plot-genes}
+for (i in seq_along(m.gene.list)) {
+
+  heatmap <- E[m.gene.list[[i]], , drop=F]
+
+  pheatmap::pheatmap(
+    GAMclust:::normalize.rows(heatmap),
+    cluster_rows=F, cluster_cols=F,
+    file=sprintf("%s/m.%s.genes.png", work.dir, i),
+    width=10, height=5,
+    show_rownames=T, show_colnames=T)
 }
 ```
 
-##### Get plots of individual genes expression (example for the third module):
+Example of the heatmap of the first module:
 
-```{r, plot-genes, fig.width=20, fig.height=10}
-Seurat::DefaultAssay(seurat_object) <- "SCT"
-
-i <- 3
-
-Seurat::FeaturePlot(seurat_object, 
-                    slot = "data",
-                    reduction = "pumap",
-                    order = T,
-                    features = m.gene.list[[i]],
-                    ncol = 6,
-                    raster = TRUE,
-                    combine = TRUE)
+```{r, fig.width=35, fig.height=7}
+pheatmap::pheatmap(
+  GAMclust:::normalize.rows(E[m.gene.list[[1]], , drop=F]),
+  show_rownames=T, show_colnames=T)
 ```
 
-##### Get tables and plots with annotation of modules:
+
+##### Get annotation tables and annotation heatmap for all modules:
 
 Functional annotation of obtained modules is done based on KEGG and Reactome canonical metabolic pathways.
 
@@ -331,10 +328,10 @@ getAnnotationTables(network.annotation = network.annotation,
                     work.dir = work.dir)
 ```
 
-Example of the annotation table of the third module:
+Example of the annotation table of the first module:
 
 ```{r}
-head(GAMclust:::read.tsv(file.path(work.dir, "m.3.pathways.tsv"))) |>
+head(GAMclust:::read.tsv(file.path(work.dir, "m.1.pathways.tsv"))) |>
   kableExtra::kable() |>
   kableExtra::kable_styling(font_size = 8) |>
   kableExtra::column_spec(1, width = "1.6in") |>
@@ -352,9 +349,9 @@ getAnnotationHeatmap(work.dir = work.dir)
 
 You may also compare two results of running GAM-clustering on the same dataset (e.g. runs with different parameters) or compare two results of running GAM-clustering on different datasets (then set `same.data=FALSE`).
 
-```{r, eval=FALSE, eval = FALSE}
+```{r, eval = FALSE}
 modulesSimilarity(dir1 = work.dir,
-                  dir2 = "old.dir",
+                  dir2 = "old_dir",
                   name1 = "new",
                   name2 = "old",
                   same.data = TRUE,

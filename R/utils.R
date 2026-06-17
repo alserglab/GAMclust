@@ -1,5 +1,9 @@
 #' Function for batch solving SGMWCS problems
 #'
+#' Creates a wrapper for sequentially solving multiple SGMWCS optimization
+#' instances. The returned function applies a selected MWCS solver to each
+#' network independently and collects the results into a single list.
+#'
 #' @param mwcs_solver SGMWCS solver from mwcsr package
 #' @export
 seq_batch_solver <- function(mwcs_solver) {

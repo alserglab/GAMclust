@@ -1,0 +1,5 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^vignettes/src$
+^docs$
+^_pkgdown\.yml$

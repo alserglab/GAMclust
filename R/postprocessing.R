@@ -1,5 +1,13 @@
 #' Get files with modules' graphs
 #'
+#' Creates graphical representations of the identified metabolic modules.
+#' For each module, the function annotates genes and metabolites, generates
+#' network layouts, and exports the results in multiple formats suitable for
+#' visualization and downstream analysis.
+#' Supported outputs include PDF, PNG, SVG, GraphML, and XGMML files.
+#' These visualizations facilitate biological interpretation of the detected
+#' metabolic subnetworks.
+#'
 #' @param modules Metabolic modules.
 #' @param network.annotation Metabolic network annotation.
 #' @param metabolites.annotation Metabolites annotation.
@@ -59,6 +67,14 @@ getGraphs <- function(modules,
 
 #' Get files with modules' genes
 #'
+#' Generates gene-level summaries for each identified metabolic module.
+#' The function exports tables containing module genes, positively scored
+#' genes that were not selected into the final module, and the top correlated
+#' genes from the complete expression dataset.
+#' Each table includes gene identifiers, symbols, module scores, and
+#' correlations with module expression patterns. These outputs provide a
+#' detailed view of the transcriptional composition of every module.
+#'
 #' @param modules Metabolic modules.
 #' @param nets Scored networks.
 #' @param patterns Patterns of metabolic modules.
@@ -114,6 +130,14 @@ getGeneTables <- function(modules, nets, patterns, gene.exprs,
 
 #' Get files with modules' annotations
 #'
+#' Annotates metabolic modules using pathway enrichment analysis. For each
+#' module, over-representation analysis is performed against the pathway
+#' collection contained in the network annotation, followed by pathway
+#' redundancy reduction.
+#' The function exports pathway tables containing significantly enriched
+#' biological processes and their associated module genes. These annotations
+#' help connect discovered modules to known metabolic functions.
+#'
 #' @param network.annotation Metabolic network annotation.
 #' @param nets Scored networks.
 #' @param work.dir Working directory where files with module genes are (results will be saved here as well).
@@ -162,6 +186,15 @@ getAnnotationTables <- function(network.annotation, nets, work.dir,
 
 
 #' Heatmap for annotated pathways
+#'
+#' Builds a heatmap summarizing pathway annotations across all identified
+#' modules. The visualization displays the proportion of module genes
+#' associated with each enriched pathway, enabling rapid comparison of
+#' functional themes between modules.
+#' Filtering options allow users to restrict displayed pathways based on
+#' adjusted p-values and gene overlap thresholds. The resulting heatmap
+#' provides a compact overview of the functional landscape revealed by
+#' GAM-clustering.
 #'
 #' @param work.dir Directory with gene and pathways tables
 #' @param padj.threshold Set threshold for p-adjusted
@@ -253,6 +286,14 @@ getAnnotationHeatmap <- function(work.dir,
 
 
 #' Compare two GAM-clustering runs
+#'
+#' Compares the results of two independent GAM-clustering analyses. The
+#' function evaluates module overlap, similarity indices, and, when
+#' applicable, correlations between module expression patterns.
+#' Comparisons can be performed using either all module genes or only
+#' positively scored genes. A combined summary figure is generated to
+#' facilitate assessment of module reproducibility and consistency across
+#' datasets or parameter settings.
 #'
 #' @param dir1 Folder with GAM-clustering results of the first run.
 #' @param dir2 Folder with GAM-clustering results of the second run.
