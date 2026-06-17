@@ -157,7 +157,7 @@ seurat_object <- readRDS("/mnt/data/e.chikina/GAM_clustering/data/tms12k.rds")
 
 E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
                                     assay = "SCT",
-                                    slot = "scale.data"))
+                                    layer = "scale.data"))
 
 nrow(E) # ! make sure this value is in range from 6,000 to 12,000
 
@@ -169,7 +169,7 @@ seurat_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_mat
 
 E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
                                     assay = "SCT",
-                                    slot = "scale.data"))
+                                    layer = "scale.data"))
 
 nrow(E) # ! make sure this value is in range from 6,000 to 12,000
 
@@ -324,7 +324,7 @@ Seurat::DefaultAssay(seurat_object) <- "SCT"
 i <- 3
 
 Seurat::FeaturePlot(seurat_object,
-                    slot = "data",
+                    layer = "data",
                     reduction = "pumap",
                     order = T,
                     features = m.gene.list[[i]],
