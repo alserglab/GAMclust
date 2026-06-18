@@ -4,7 +4,13 @@
 \alias{getAnnotationTables}
 \title{Get files with modules' annotations}
 \usage{
-getAnnotationTables(network.annotation, nets, work.dir, padj.threshold = Inf)
+getAnnotationTables(
+  network.annotation,
+  nets,
+  work.dir,
+  pathways = NULL,
+  padj.threshold = Inf
+)
 }
 \arguments{
 \item{network.annotation}{Metabolic network annotation.}
@@ -12,6 +18,8 @@ getAnnotationTables(network.annotation, nets, work.dir, padj.threshold = Inf)
 \item{nets}{Scored networks.}
 
 \item{work.dir}{Working directory where files with module genes are (results will be saved here as well).}
+
+\item{pathways}{Optional custom list of pathways for enrichment analysis. If NULL (default), pathways are taken from `network.annotation$pathways`.}
 
 \item{padj.threshold}{Threshold, adjusted p-value, for pathways.}
 }

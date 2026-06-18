@@ -141,14 +141,21 @@ getGeneTables <- function(modules, nets, patterns, gene.exprs,
 #' @param network.annotation Metabolic network annotation.
 #' @param nets Scored networks.
 #' @param work.dir Working directory where files with module genes are (results will be saved here as well).
+#' @param pathways Optional custom list of pathways for enrichment analysis. If NULL (default), pathways are taken from `network.annotation$pathways`.
 #' @param padj.threshold Threshold, adjusted p-value, for pathways.
 #' @return Results of this function can be seen in work.dir (.tsv files).
 #' @export
-getAnnotationTables <- function(network.annotation, nets, work.dir,
-                                 padj.threshold = Inf){
+getAnnotationTables <- function(network.annotation, 
+                                nets,
+                                work.dir,
+                                pathways = NULL,
+                                padj.threshold = Inf){
 
   g_files <- list.files(work.dir, "m\\.[0-9]+\\.genes\\.tsv", full.names = T)
   if(length(g_files) == 0){stop("Use `annotateModules()` after `getGeneTables()` only.")}
+  
+  if (is.null(pathways)) {
+    pathways <- network.annotation$pathways}
 
   for (i in 1:length(g_files)){
 
@@ -157,11 +164,11 @@ getAnnotationTables <- function(network.annotation, nets, work.dir,
     name <- sapply(strsplit(name, ".", fixed = T),"[[", 2)
     net <- nets[[as.numeric(name)]]
 
-    foraRes <- fgsea::fora(pathways=network.annotation$pathways,
+    foraRes <- fgsea::fora(pathways=pathways,
                            genes=file$Entrez,
                            universe=unique(igraph::as_data_frame(net)$gene))
     foraResCllpsd <- fgsea::collapsePathwaysORA(foraRes = foraRes[order(pval)][padj < padj.threshold],
-                                                pathways = network.annotation$pathways,
+                                                pathways = pathways,
                                                 genes = file$Entrez,
                                                 universe = unique(igraph::as_data_frame(net)$gene))
     mainPathways <- foraRes[pathway %in% foraResCllpsd$mainPathways][order(-overlap), ]
