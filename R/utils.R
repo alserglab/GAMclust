@@ -6,6 +6,21 @@ seq_batch_solver <- function(mwcs_solver) {
   function(instances) { lapply(instances, mwcsr::solve_mwcsp, solver=mwcs_solver) }
 }
 
+#' Calculate correlation matrix from prepped expression matrices 
+#' both a and b have the same number of columns, b could be a vector
+#' data is precentered and prescaled
+corFromPrep <- function(a, b) {
+  if (is.vector(b)) {
+    b <- t(b)
+  }
+  m <- a %*% t(b) # 32 x samples * samples x genes = 32 x genes
+  # ensure that the similarities between genes & centroids in m are not biased by differences in the magnitudes of ...
+  # ...gene expression values (normalizes the columns of m):
+  m <- m / sqrt(max(rowSums(b**2))) # scales the rows of m by their Euclidean lengths -> m is [-1, 1]
+  # ...centroid values (normalizes the rows of m):
+  m <- sweep(x = m, MARGIN = 1, FUN = '/', STATS = sqrt(rowSums(a**2)))
+  m
+}
 
 getCenter <- function(gene.exprs,
                       cluster.genes=seq_len(nrow(gene.exprs)),
