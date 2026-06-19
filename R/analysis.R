@@ -214,6 +214,8 @@ preClustering <- function(E.prep,
 #' @param show.intermediate.clustering Whether to show or not heatmap of intermediate clusters.
 #' @param verbose Verbose running.
 #' @param collect.stats Whether to save or not running statistics.
+#' @param reference.patterns Matrix of reference patterns to track correlation of centers against. 
+#'     Pattern per row. Number of columns should be the sames as in E.prep.
 #' @return results$modules -- Metabolic modules.
 #' @return results$nets -- Scored networks.
 #' @return results$patterns.pos -- Modules' patterns (genes with positive score only considered).
@@ -236,7 +238,8 @@ gamClustering <- function(E.prep,
                           
                           show.intermediate.clustering = TRUE,
                           verbose = TRUE,
-                          collect.stats = TRUE
+                          collect.stats = TRUE,
+                          reference.patterns = NULL
                           ){
   
   flog.info("GAM-CLUSTERING starts here.", name = "stats.logger")
@@ -253,6 +256,13 @@ gamClustering <- function(E.prep,
     while (T) {
       
       flog.info("[*] Iteration %s", iteration, name = "stats.logger")
+      
+      if (!is.null(reference.patterns)) {
+        flog.info("correlations with references: %s", 
+                  paste0(matrixStats::colMaxs(corFromPrep(cur.centers, 
+                                                          reference.patterns)),
+                                              collapse =" "))
+      }
       
       # 0. PREPARE ENVIRONMENT
 
