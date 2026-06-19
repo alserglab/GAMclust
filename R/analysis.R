@@ -23,6 +23,28 @@ prepareData <- function(
     E <- t(apply(E, 1, function(x) tapply(x, colnames(E), mean)))
   }
   
+  # memory efficient, limits creating temp matrices in memory, except for t(E)
+  mu <- matrixStats::rowMeans2(E)
+  s  <- matrixStats::rowSds(E);   s[s == 0] <- 1
+  
+  if (use.PCA && use.PCA.n >= ncol(E) - 1)  {
+    use.PCA <- FALSE
+  }
+  
+  if (use.PCA) {
+    pcaRev  <- irlba::irlba(t(E), nv = use.PCA.n,
+                            center = mu, scale = s)
+    E.red <- pcaRev$v %*% diag(pcaRev$d)
+    rownames(E.red) <- rownames(E)
+    colnames(E.red) <- paste0("PC", seq_len(use.PCA.n))
+    E <- E.red
+    # rescale to ignore everything beyond the top components
+    E <- t(base::scale(t(E), center = FALSE, scale = TRUE))
+    E[is.na(E)] <- 0 # for sd=0
+  } else {
+    E <- t(base::scale(t(E), center = mu, scale = s))  
+  }
+
   new2old <- rownames(E)
   
   if(is.null(gene.id.type) || gene.id.type == network.annotation$baseId){
@@ -41,32 +63,14 @@ prepareData <- function(
       stop(message.string)
     }
   }
-  
   names(new2old) <- rownames(E)
-
+  
+  
+  E <- E[order(mu, decreasing = T), ]
   E <- E[!is.na(rownames(E)), ]
-  E <- E[order(rowMeans(E), decreasing = T), ]
   E <- E[!duplicated(rownames(E)), ]
-  E <- E[head(order(rowMeans(E), decreasing = T), keep.top.genes), ]
-  
-  E <- t(base::scale(t(E), center = TRUE, scale = TRUE))
-  E[is.na(E)] <- 0 # E <- E[rowSums(is.na(E)) == 0, ]
-  
-  if(use.PCA){
-    if(use.PCA.n > ncol(E)){
-      message.string <- sprintf("Please provide value of `use.PCA.n` smaller than `ncol(E)` = %s.", ncol(E))
-      flog.error(message.string, name = "stats.logger")
-      stop(message.string)
-    }
-    pcaRev <- irlba::prcomp_irlba(E, n = use.PCA.n, center = FALSE, scale. = FALSE, retx = TRUE)
-    E.red <- pcaRev$x # E.red <- pcaRev$x %*% t(pcaRev$rotation)
-    rownames(E.red) <- rownames(E)
-    
-    E <- E.red
-    E <- t(base::scale(t(E), center = FALSE, scale = TRUE))
-    E[is.na(E)] <- 0 # E <- E[rowSums(is.na(E)) == 0, ]
-  } 
-  
+  E <- head(E, keep.top.genes)
+
   attributes(E)$original.gene.names <- new2old
   
   E
