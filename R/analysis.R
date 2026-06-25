@@ -205,7 +205,8 @@ preClustering <- function(E.prep,
 #' @param network.prep Network edge table driven from `prepareNetwork()` function.
 #' @param cur.centers Initial patterns produced by `preClustering()` function.
 #' @param start.base The parameter which influences modules sizes.
-#' @param base.dec The value by which `base` parameter should be reduced if some module's size is bigger that `max.module.size`.
+#' @param base.dec The value controlling how strongly `base` parameter should be reduced if some module's size is bigger that `max.module.size`.
+#'                 The update rule is: `base <- base * (1 - base.dec)`. Detaulf: `0.1`.
 #' @param max.module.size Maximal number of unique genes in the final module.
 #' @param cor.threshold Threshold for correlation between module patterns.
 #' @param p.adj.val.threshold Padj threshold of geseca score for final modules.
@@ -227,7 +228,7 @@ gamClustering <- function(E.prep,
                           cur.centers,
                           
                           start.base = 0.5,
-                          base.dec = 0.05,
+                          base.dec = 0.1,
                           max.module.size = 50,
                           
                           cor.threshold = 0.8,
@@ -348,7 +349,7 @@ gamClustering <- function(E.prep,
         iter.stats[[iteration]] <- iter.stats_add
       }
       if (verbose) {
-        flog.info(">> base was equal to: %s", base, 
+        flog.info(">> base was equal to: %.2g", base, 
                   name = "stats.logger")
         flog.info(">> number of modules was equal to: %s", length(ms_mods), 
                   name = "stats.logger")
@@ -433,7 +434,7 @@ gamClustering <- function(E.prep,
     biggest.one <- max(sapply(ms_mods, function(m) ulength(igraph::E(m)$gene))) 
     
     if (biggest.one > max.module.size) {
-      base <- base - base.dec
+      base <- base - base.dec * base
     }
     
     # (ii) CORRELATED ONES: 

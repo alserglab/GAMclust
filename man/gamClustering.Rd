@@ -9,7 +9,7 @@ gamClustering(
   network.prep,
   cur.centers,
   start.base = 0.5,
-  base.dec = 0.05,
+  base.dec = 0.1,
   max.module.size = 50,
   cor.threshold = 0.8,
   p.adj.val.threshold = 0.001,
@@ -17,7 +17,8 @@ gamClustering(
   work.dir,
   show.intermediate.clustering = TRUE,
   verbose = TRUE,
-  collect.stats = TRUE
+  collect.stats = TRUE,
+  reference.patterns = NULL
 )
 }
 \arguments{
@@ -29,7 +30,8 @@ gamClustering(
 
 \item{start.base}{The parameter which influences modules sizes.}
 
-\item{base.dec}{The value by which `base` parameter should be reduced if some module's size is bigger that `max.module.size`.}
+\item{base.dec}{The value controlling how strongly `base` parameter should be reduced if some module's size is bigger that `max.module.size`.
+The update rule is: `base <- base * (1 - base.dec)`. Detaulf: `0.1`.}
 
 \item{max.module.size}{Maximal number of unique genes in the final module.}
 
@@ -46,6 +48,9 @@ gamClustering(
 \item{verbose}{Verbose running.}
 
 \item{collect.stats}{Whether to save or not running statistics.}
+
+\item{reference.patterns}{Matrix of reference patterns to track correlation of centers against. 
+Pattern per row. Number of columns should be the sames as in E.prep.}
 }
 \value{
 results$modules -- Metabolic modules.
