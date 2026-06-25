@@ -82,7 +82,8 @@ doGeseca <- function(E.prep,
                      modules,
                      scale = FALSE,
                      center = FALSE,
-                     verbose = TRUE) {
+                     verbose = TRUE,
+                     gesecaSeed = NULL) {
   
   E.prep_filtered <- E.prep[rownames(E.prep) %in% network.prep$gene, , drop = F]
 
@@ -90,14 +91,35 @@ doGeseca <- function(E.prep,
     lapply(modules, function(cm) {igraph::E(cm)$gene}), 
     paste0("c.pos", seq_along(modules)))
   
-  suppressWarnings(gesecaRes <- fgsea::geseca(pathways = modules_path,
-                                              E = E.prep_filtered,
-                                              scale = scale,
-                                              center = center))
+  if (!is.null(gesecaSeed)) {
+    gesecaRes <- rbindlist(lapply(seq_along(modules_path), 
+                           function(i) {
+                             if (exists(".Random.seed", envir = .GlobalEnv)) {
+                               old_seed <- get(".Random.seed", envir = .GlobalEnv)
+                               # Ensure it restores when the function finishes or errors out
+                               on.exit(assign(".Random.seed", old_seed, envir = .GlobalEnv))
+                             }
+                             set.seed(gesecaSeed)
+                             suppressWarnings(fgsea::geseca(pathways = modules_path[i],
+                                           E = E.prep_filtered,
+                                           scale = scale,
+                                           center = center,
+                                           sampleSize=1001))
+                           }))
+  } else {
+    suppressWarnings(gesecaRes <- fgsea::geseca(pathways = modules_path,
+                                                E = E.prep_filtered,
+                                                scale = scale,
+                                                center = center,
+                                                sampleSize=1001)) # higher accuracy for better stability around threshold
+    
+  }
+  
+                              
   
   if(verbose){
     flog.info(">> geseca padjs were in range: %s", 
-              paste(round(range(gesecaRes$padj), 5), collapse = "-"),
+              paste(sprintf("%.2g", range(gesecaRes$padj)), collapse = " - "),
               name = "stats.logger")}
   
   gesecaRes

@@ -261,7 +261,8 @@ gamClustering <- function(E.prep,
         flog.info("correlations with references: %s", 
                   paste0(matrixStats::colMaxs(corFromPrep(cur.centers, 
                                                           reference.patterns)),
-                                              collapse =" "))
+                                              collapse =" "),
+                  name = "stats.logger")
       }
       
       # 0. PREPARE ENVIRONMENT
@@ -407,6 +408,14 @@ gamClustering <- function(E.prep,
 
       cur.centers <- rev$centers.pos
       
+      if (!is.null(reference.patterns)) {
+        flog.info("updated correlations with references (before potential merging): %s", 
+                  paste0(matrixStats::colMaxs(corFromPrep(cur.centers, 
+                                                          reference.patterns)),
+                         collapse =" "),
+                  name = "stats.logger")
+      }
+      
       iteration <- iteration + 1
       
       if (verbose) {flog.info(">> max diff: %s", round(diff, 2), name = "stats.logger")}
@@ -452,8 +461,12 @@ gamClustering <- function(E.prep,
                             modules = rev$modules,
                             scale = FALSE,
                             center = FALSE,
-                            verbose = verbose)
+                            verbose = verbose,
+                            gesecaSeed = 0)
       
+      # TODO: geseca is randomized, there can be instabilities of comparing with a threshold
+      # currently using sampleSize=1001 for more stability, but size-based thresholds
+      # can be precomputed
       good <- gesecaRes$pathway[which(gesecaRes$padj < p.adj.val.threshold)]
       bad <- rownames(cur.centers)[!rownames(cur.centers) %in% good]
       
@@ -501,7 +514,8 @@ gamClustering <- function(E.prep,
                         modules = modules,
                         scale = FALSE,
                         center = FALSE,
-                        verbose = verbose)
+                        verbose = verbose,
+                        gesecaSeed = 0)
   
   order_idx <- as.numeric(gsub("c.pos", "", gesecaRes$pathway))
   
