@@ -106,6 +106,7 @@ doGeseca <- function(E.prep,
                                            center = center,
                                            sampleSize=1001))
                            }))
+    gesecaRes <- gesecaRes[order(pval), ]
   } else {
     suppressWarnings(gesecaRes <- fgsea::geseca(pathways = modules_path,
                                                 E = E.prep_filtered,
