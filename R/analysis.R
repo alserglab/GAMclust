@@ -260,7 +260,7 @@ gamClustering <- function(E.prep,
       
       if (!is.null(reference.patterns)) {
         flog.info("correlations with references: %s", 
-                  paste0(matrixStats::colMaxs(corFromPrep(cur.centers, 
+                  paste0(matrixStats::colMaxs(cosine(cur.centers, 
                                                           reference.patterns)),
                                               collapse =" "),
                   name = "stats.logger")
@@ -285,7 +285,8 @@ gamClustering <- function(E.prep,
       
       # 1. CALCULATE CORRELATIONS -> DISTANCES -> SCORES
 
-      m <- corFromPrep(cur.centers, E.prep)
+      # m <- corFromPrep(cur.centers, E.prep)
+      m <- cosine(cur.centers, E.prep)
       
       dist.to.centers <- 1-m
       dist.to.centers[dist.to.centers < 1e-10] <- 0
@@ -411,7 +412,7 @@ gamClustering <- function(E.prep,
       
       if (!is.null(reference.patterns)) {
         flog.info("updated correlations with references (before potential merging): %s", 
-                  paste0(matrixStats::colMaxs(corFromPrep(cur.centers, 
+                  paste0(matrixStats::colMaxs(cosine(cur.centers, 
                                                           reference.patterns)),
                          collapse =" "),
                   name = "stats.logger")
@@ -439,7 +440,8 @@ gamClustering <- function(E.prep,
     
     # (ii) CORRELATED ONES: 
     
-    centers.cors <- cor(t(cur.centers))
+    # centers.cors <- cor(t(cur.centers))
+    centers.cors <- cosine(cur.centers)
     diag(centers.cors) <- 0
     correlation.max <- apply(centers.cors, 1, max, na.rm=T)
     
@@ -470,16 +472,32 @@ gamClustering <- function(E.prep,
       # can be precomputed
       good <- gesecaRes$pathway[which(gesecaRes$padj < p.adj.val.threshold)]
       bad <- rownames(cur.centers)[!rownames(cur.centers) %in% good]
-      
+
       if (length(bad) == 0 & biggest.one > max.module.size) {next} 
       if (length(bad) == 0 & biggest.one <= max.module.size) {break} 
       if (length(bad) != 0 & nrow(cur.centers) > 1) {
         
-        max.cor.mod1 <- as.integer(gsub("c.pos", "", bad[which.max(apply(centers.cors, 1, max, na.rm=T)[bad])]))
-        max.cor.mod2 <- which.max(centers.cors[max.cor.mod1, ])
-        cur.centers <- updCenters(cur.centers = cur.centers, 
-                                  m1 = max.cor.mod1, m2 = max.cor.mod2, 
-                                  E.prep = E.prep, ms_mods = ms_mods)
+        m <- cosine(cur.centers, E.prep)
+        is.positive <- (1 - m < base)
+        # number of genes with potentially positive scores in two modules
+        gene.overlaps <- crossprod(t(is.positive)) 
+        diag(gene.overlaps) <- 0
+        
+        if (max(gene.overlaps[bad, ]) > 0) {
+          # There is some overlap, we can try to merge a bad module with the good one,
+          # without losing the genes from the bad one (and not destroying good one too much).
+          # It also means that the centers are pretty similar.
+          max.cor.mod1 <- as.integer(gsub("c.pos", "", bad[which.max(apply(gene.overlaps, 1, max, na.rm=T)[bad])]))
+          max.cor.mod2 <- which.max(gene.overlaps[max.cor.mod1, ])
+          cur.centers <- updCenters(cur.centers = cur.centers, 
+                                    m1 = max.cor.mod1, m2 = max.cor.mod2, 
+                                    E.prep = E.prep, ms_mods = ms_mods,
+                                    reference.patterns = reference.patterns)
+        } else {
+          # No point in merging, let's remove module with the least number of positive genes. 
+          to.remove <- names(which.min(rowSums(is.positive)[bad]))
+          cur.centers <- cur.centers[rownames(cur.centers) != to.remove, ]
+        }
       } else {
         saveStats(work.dir, rev, gesecaRes, iter.stats)
         message.string <- "[Attention!] No modules found.\n

@@ -22,6 +22,20 @@ corFromPrep <- function(a, b) {
   m
 }
 
+# calculate cosine similarity between rows of a and b (b could be a vector)
+cosine <- function(a, b=NULL) {
+  if (is.null(b)) {
+    b <- a
+  }
+  if (is.vector(b)) {
+    b <- t(b)
+  }
+  m <- a %*% t(b) 
+  m <- sweep(x = m, MARGIN = 2, FUN = '/', STATS = sqrt(rowSums(b**2)))
+  m <- sweep(x = m, MARGIN = 1, FUN = '/', STATS = sqrt(rowSums(a**2)))
+  m
+}
+
 getCenter <- function(gene.exprs,
                       cluster.genes=seq_len(nrow(gene.exprs)),
                       cluster.genes.neg=c(),
