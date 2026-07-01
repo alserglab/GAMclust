@@ -15,11 +15,11 @@ prepareNetwork(
 )
 }
 \arguments{
-\item{E}{Expression matrix after the `prepareData()` function.}
+\item{E}{Expression matrix after the \code{prepareData()} function.}
 
 \item{network}{Metabolic network.}
 
-\item{topology}{Vertices can be represented either as `metabolites`, either as `atoms`.}
+\item{topology}{Vertices can be represented either as \code{metabolites}, either as \code{atoms}.}
 
 \item{met.to.filter}{Metabolites that should not be used as connections in the module.}
 

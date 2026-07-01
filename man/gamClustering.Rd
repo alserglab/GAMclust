@@ -22,16 +22,16 @@ gamClustering(
 )
 }
 \arguments{
-\item{E.prep}{Expression matrix after the `prepareData()` function.}
+\item{E.prep}{Expression matrix after the \code{prepareData()} function.}
 
-\item{network.prep}{Network edge table driven from `prepareNetwork()` function.}
+\item{network.prep}{Network edge table driven from \code{prepareNetwork()} function.}
 
-\item{cur.centers}{Initial patterns produced by `preClustering()` function.}
+\item{cur.centers}{Initial patterns produced by \code{preClustering()} function.}
 
 \item{start.base}{The parameter which influences modules sizes.}
 
-\item{base.dec}{The value controlling how strongly `base` parameter should be reduced if some module's size is bigger that `max.module.size`.
-The update rule is: `base <- base * (1 - base.dec)`. Detaulf: `0.1`.}
+\item{base.dec}{The value controlling how strongly \code{base} parameter should be reduced if some module's size is bigger that \code{max.module.size}.
+The update rule is: \code{base <- base * (1 - base.dec)}. Detaulf: \code{0.1}.}
 
 \item{max.module.size}{Maximal number of unique genes in the final module.}
 
@@ -49,7 +49,7 @@ The update rule is: `base <- base * (1 - base.dec)`. Detaulf: `0.1`.}
 
 \item{collect.stats}{Whether to save or not running statistics.}
 
-\item{reference.patterns}{Matrix of reference patterns to track correlation of centers against. 
+\item{reference.patterns}{Matrix of reference patterns to track correlation of centers against.
 Pattern per row. Number of columns should be the sames as in E.prep.}
 }
 \value{
