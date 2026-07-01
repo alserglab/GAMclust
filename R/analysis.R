@@ -491,8 +491,7 @@ gamClustering <- function(E.prep,
           max.cor.mod2 <- which.max(gene.overlaps[max.cor.mod1, ])
           cur.centers <- updCenters(cur.centers = cur.centers, 
                                     m1 = max.cor.mod1, m2 = max.cor.mod2, 
-                                    E.prep = E.prep, ms_mods = ms_mods,
-                                    reference.patterns = reference.patterns)
+                                    E.prep = E.prep, ms_mods = ms_mods)
         } else {
           # No point in merging, let's remove module with the least number of positive genes. 
           to.remove <- names(which.min(rowSums(is.positive)[bad]))
