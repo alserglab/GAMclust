@@ -1,6 +1,6 @@
 Package: GAMclust
 Title: GAM-clustering: Metabolic Modules Derivig From RNAseq Data
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person(given = "Anastasiia",
            family = "Gainullina",
@@ -39,7 +39,7 @@ Imports:
     ggplot2,
     igraph,
     limma,
-    mwcsr (>= 0.1.11),
+    mwcsr (>= 0.1.12),
     irlba,
     pheatmap,
     futile.logger,
