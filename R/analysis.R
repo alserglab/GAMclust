@@ -1,5 +1,14 @@
 #' Prepare gene expression matrix
 #'
+#' Prepares a gene expression matrix for GAM-clustering analysis. The function
+#' optionally converts gene identifiers to the annotation format used by the
+#' metabolic network, removes duplicates, retains the most highly expressed
+#' genes, and standardizes expression values.
+#' Biological replicates can be collapsed by averaging, and dimensionality
+#' reduction can be applied using PCA.
+#' The resulting matrix contains only processed features suitable for
+#' downstream network-based module discovery.
+#'
 #' @param E Expression matrix with rownames as gene symbols.
 #' @param gene.id.type Gene ID type.
 #' @param keep.top.genes Which top of the most expressed genes to keep for the further analysis.
@@ -77,6 +86,14 @@ prepareData <- function(
 }
 
 #' Prepare network
+#'
+#' Constructs a metabolic interaction network tailored to the analyzed dataset.
+#' The function integrates network topology with gene–enzyme–reaction
+#' annotations, removes filtered metabolites, and retains only genes present
+#' in the processed expression matrix.
+#' Networks can be represented at either the metabolite or atom level.
+#' The final output corresponds to the largest connected component of the
+#' metabolic network and serves as the graph structure for GAM-clustering.
 #'
 #' @param E Expression matrix after the `prepareData()` function.
 #' @param network Metabolic network.
@@ -159,6 +176,13 @@ prepareNetwork <- function(
 
 #' Defining initial patterns
 #'
+#' Generates an initial set of transcriptional patterns that serve as
+#' starting points for module detection. The function first restricts the
+#' expression matrix to metabolic genes represented in the network and then
+#' performs clustering to identify preliminary expression signatures.
+#' By default, cluster centers are obtained using k-means clustering.
+#' These initial patterns are subsequently refined by the GAM-clustering algorithm.
+#'
 #' @param E.prep Expression matrix after the `prepareData()` function.
 #' @param network.prep Network edge table driven from `prepareNetwork()` function.
 #' @param initial.number.of.clusters The number of clusters for the initial approximation of modules.
@@ -201,6 +225,32 @@ preClustering <- function(E.prep,
 
 #' GAM-clustering analysis
 #'
+#' Performs the core GAM-clustering procedure to identify transcriptionally
+#' coordinated metabolic modules. Starting from initial expression patterns,
+#' the algorithm iteratively scores genes, solves SGMWCS optimization problems
+#' on the metabolic network, and updates module-specific expression profiles
+#' until convergence.
+#' Additional refinement steps merge highly similar modules, remove
+#' uninformative patterns, and control module size. The function returns
+#' final metabolic modules, scored networks, module expression patterns,
+#' and detailed iteration statistics.
+#' 
+#' @section Parameter tuning:
+#' There is a set of parameters which determine the size and number of the
+#' final modules. We recommend starting with the default settings, but the
+#' following adjustments may be useful:
+#'
+#' \itemize{
+#'   \item If you consider final modules to be too small or too big and it 
+#'   complicates interpretation for you, you can either increase or reduce by 
+#'   10 units the max.module.size parameter.
+#'   \item If among final modules you consider presence of any modules with too 
+#'   similar patterns, you can reduce by 0.1 units the cor.threshold parameter.
+#'   \item If among final modules you consider presence of any uninformative 
+#'   modules, you can reduce by 10 times the p.adj.val.threshold parameter.
+#' }
+#' 
+#' @param E.prep Expression matrix after the `prepareData()` function.
 #' @param E.prep Expression matrix after the `prepareData()` function.
 #' @param network.prep Network edge table driven from `prepareNetwork()` function.
 #' @param cur.centers Initial patterns produced by `preClustering()` function.

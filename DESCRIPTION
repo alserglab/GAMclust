@@ -48,7 +48,7 @@ Suggests:
     org.Mm.eg.db,
     reactome.db,
     KEGGREST,
-    Seurat,
+    Seurat (>= 5.0.0),
     Rgraphviz,
     rsvg,
     testthat,

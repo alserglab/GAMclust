@@ -88,7 +88,7 @@ met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclus
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package, 
 
-```{r, rnc_solver, eval = FALSE}
+```{r, rnc_solver, eval=FALSE}
 solver <- mwcsr::rnc_solver()
 ```
 
@@ -109,7 +109,7 @@ solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 (5) set working directory where the results will be saved to.
 
 ```{r}
-work.dir <- "results"
+work.dir <- "results-spat"
 dir.create(work.dir, showWarnings = F, recursive = T)
 ```
 

@@ -4,7 +4,13 @@
 \alias{getAnnotationTables}
 \title{Get files with modules' annotations}
 \usage{
-getAnnotationTables(network.annotation, nets, work.dir, padj.threshold = Inf)
+getAnnotationTables(
+  network.annotation,
+  nets,
+  work.dir,
+  pathways = NULL,
+  padj.threshold = Inf
+)
 }
 \arguments{
 \item{network.annotation}{Metabolic network annotation.}
@@ -13,11 +19,19 @@ getAnnotationTables(network.annotation, nets, work.dir, padj.threshold = Inf)
 
 \item{work.dir}{Working directory where files with module genes are (results will be saved here as well).}
 
+\item{pathways}{Optional custom list of pathways for enrichment analysis. If NULL (default), pathways are taken from \code{network.annotation$pathways}.}
+
 \item{padj.threshold}{Threshold, adjusted p-value, for pathways.}
 }
 \value{
 Results of this function can be seen in work.dir (.tsv files).
 }
 \description{
-Get files with modules' annotations
+Annotates metabolic modules using pathway enrichment analysis. For each
+module, over-representation analysis is performed against the pathway
+collection contained in the network annotation, followed by pathway
+redundancy reduction.
+The function exports pathway tables containing significantly enriched
+biological processes and their associated module genes. These annotations
+help connect discovered modules to known metabolic functions.
 }
