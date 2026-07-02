@@ -97,7 +97,7 @@ solver <- mwcsr::rnc_solver()
 cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
-```{r, include=FALSE, eval=FALSE}
+```{r, include=FALSE, eval=TRUE}
 cplex.dir <- Sys.getenv("CPLEX_HOME")
 if (file.exists("cplex_path.R")) source("cplex_path.R") 
 ```
@@ -109,7 +109,7 @@ solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 (5) set working directory where the results will be saved to.
 
 ```{r, work-dir}
-work.dir <- "results"
+work.dir <- "results-bulk"
 dir.create(work.dir, showWarnings = F, recursive = T)
 ```
 
