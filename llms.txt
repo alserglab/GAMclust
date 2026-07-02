@@ -1,0 +1,63 @@
+# GAM-clustering
+
+`GAMclust` is an R package for identifying transcriptionally regulated
+metabolic modules in complex RNA sequencing datasets.
+
+`GAMclust` implements a flexible data processing pipeline designed to
+analyze three major types of RNA-seq data: bulk, single-cell, and
+spatial. The pipeline takes as an input a gene expression matrix and a
+global metabolic network. After initial preprocessing, both of these
+inputs are integrated by the GAM-clustering algorithm, which identifies
+metabolic subnetworks (modules) with correlated gene expression
+behaviors. To aid in the interpretation of the results, several
+post-processing procedures are carried out, including visualization and
+annotation of the modules.
+
+Interactive results of GAM-clustering analysis of ImmGen Open Source and
+Tabula Muris data can be explored
+[here](http://artyomovlab.wustl.edu/immgen-met/), details are in
+[Gainullina et al,
+2023](https://www.cell.com/cell-reports/fulltext/S2211-1247(23)00057-8).
+
+# Installation
+
+`GAMclust` package can be insttalled from GitHub:
+
+`{r, eval=FALSE} devtools::install_github("alserglab/GAMclust")`
+
+# Usage
+
+Examples of applying `GAMclust` to different type of data:
+
+- bulk RNA-seq data
+  ([tutorial](https://rpubs.com/anastasiiaNG/GAMclust_BULK)),
+- single cell RNA-seq data
+  ([tutorial](https://rpubs.com/anastasiiaNG/GAMclust_SC)),
+- spatial RNA-seq data
+  ([tutorial](https://rpubs.com/anastasiiaNG/GAMclust_SPAT)).
+
+# Package index
+
+## All functions
+
+- [`gamClustering()`](https://github.com/alserglab/GAMclust/reference/gamClustering.md)
+  : GAM-clustering analysis
+- [`getAnnotationHeatmap()`](https://github.com/alserglab/GAMclust/reference/getAnnotationHeatmap.md)
+  : Heatmap for annotated pathways
+- [`getAnnotationTables()`](https://github.com/alserglab/GAMclust/reference/getAnnotationTables.md)
+  : Get files with modules' annotations
+- [`getGeneTables()`](https://github.com/alserglab/GAMclust/reference/getGeneTables.md)
+  : Get files with modules' genes
+- [`getGraphs()`](https://github.com/alserglab/GAMclust/reference/getGraphs.md)
+  : Get files with modules' graphs
+- [`modulesSimilarity()`](https://github.com/alserglab/GAMclust/reference/modulesSimilarity.md)
+  : Compare two GAM-clustering runs
+- [`preClustering()`](https://github.com/alserglab/GAMclust/reference/preClustering.md)
+  : Defining initial patterns
+- [`prepareData()`](https://github.com/alserglab/GAMclust/reference/prepareData.md)
+  : Prepare gene expression matrix
+- [`prepareNetwork()`](https://github.com/alserglab/GAMclust/reference/prepareNetwork.md)
+  : Prepare network
+- [`seq_batch_solver()`](https://github.com/alserglab/GAMclust/reference/seq_batch_solver.md)
+  : Function for batch solving SGMWCS problems
+
