@@ -81,13 +81,13 @@ final modules. We recommend starting with the default settings, but the
 following adjustments may be useful:
 
 \itemize{
-  \item If you consider final modules to be too small or too big and it 
-  complicates interpretation for you, you can either increase or reduce by 
-  10 units the max.module.size parameter.
-  \item If among final modules you consider presence of any modules with too 
-  similar patterns, you can reduce by 0.1 units the cor.threshold parameter.
-  \item If among final modules you consider presence of any uninformative 
-  modules, you can reduce by 10 times the p.adj.val.threshold parameter.
+\item If you consider final modules to be too small or too big and it
+complicates interpretation for you, you can either increase or reduce by
+10 units the max.module.size parameter.
+\item If among final modules you consider presence of any modules with too
+similar patterns, you can reduce by 0.1 units the cor.threshold parameter.
+\item If among final modules you consider presence of any uninformative
+modules, you can reduce by 10 times the p.adj.val.threshold parameter.
 }
 }
 
