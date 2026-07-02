@@ -32,6 +32,28 @@ prepareData <- function(
     E <- t(apply(E, 1, function(x) tapply(x, colnames(E), mean)))
   }
   
+  # memory efficient, limits creating temp matrices in memory, except for t(E)
+  mu <- matrixStats::rowMeans2(E)
+  s  <- matrixStats::rowSds(E);   s[s == 0] <- 1
+  
+  if (use.PCA && use.PCA.n >= ncol(E) - 1)  {
+    use.PCA <- FALSE
+  }
+  
+  if (use.PCA) {
+    pcaRev  <- irlba::irlba(t(E), nv = use.PCA.n,
+                            center = mu, scale = s)
+    E.red <- pcaRev$v %*% diag(pcaRev$d)
+    rownames(E.red) <- rownames(E)
+    colnames(E.red) <- paste0("PC", seq_len(use.PCA.n))
+    E <- E.red
+    # rescale to ignore everything beyond the top components
+    E <- t(base::scale(t(E), center = FALSE, scale = TRUE))
+    E[is.na(E)] <- 0 # for sd=0
+  } else {
+    E <- t(base::scale(t(E), center = mu, scale = s))  
+  }
+
   new2old <- rownames(E)
   
   if(is.null(gene.id.type) || gene.id.type == network.annotation$baseId){
@@ -50,32 +72,14 @@ prepareData <- function(
       stop(message.string)
     }
   }
-  
   names(new2old) <- rownames(E)
-
+  
+  
+  E <- E[order(mu, decreasing = T), ]
   E <- E[!is.na(rownames(E)), ]
-  E <- E[order(rowMeans(E), decreasing = T), ]
   E <- E[!duplicated(rownames(E)), ]
-  E <- E[head(order(rowMeans(E), decreasing = T), keep.top.genes), ]
-  
-  E <- t(base::scale(t(E), center = TRUE, scale = TRUE))
-  E[is.na(E)] <- 0 # E <- E[rowSums(is.na(E)) == 0, ]
-  
-  if(use.PCA){
-    if(use.PCA.n > ncol(E)){
-      message.string <- sprintf("Please provide value of `use.PCA.n` smaller than `ncol(E)` = %s.", ncol(E))
-      flog.error(message.string, name = "stats.logger")
-      stop(message.string)
-    }
-    pcaRev <- irlba::prcomp_irlba(E, n = use.PCA.n, center = FALSE, scale. = FALSE, retx = TRUE)
-    E.red <- pcaRev$x # E.red <- pcaRev$x %*% t(pcaRev$rotation)
-    rownames(E.red) <- rownames(E)
-    
-    E <- E.red
-    E <- t(base::scale(t(E), center = FALSE, scale = TRUE))
-    E[is.na(E)] <- 0 # E <- E[rowSums(is.na(E)) == 0, ]
-  } 
-  
+  E <- head(E, keep.top.genes)
+
   attributes(E)$original.gene.names <- new2old
   
   E
@@ -251,7 +255,8 @@ preClustering <- function(E.prep,
 #' @param network.prep Network edge table driven from `prepareNetwork()` function.
 #' @param cur.centers Initial patterns produced by `preClustering()` function.
 #' @param start.base The parameter which influences modules sizes.
-#' @param base.dec The value by which `base` parameter should be reduced if some module's size is bigger that `max.module.size`.
+#' @param base.dec The value controlling how strongly `base` parameter should be reduced if some module's size is bigger that `max.module.size`.
+#'                 The update rule is: `base <- base * (1 - base.dec)`. Detaulf: `0.1`.
 #' @param max.module.size Maximal number of unique genes in the final module.
 #' @param cor.threshold Threshold for correlation between module patterns.
 #' @param p.adj.val.threshold Padj threshold of geseca score for final modules.
@@ -260,6 +265,8 @@ preClustering <- function(E.prep,
 #' @param show.intermediate.clustering Whether to show or not heatmap of intermediate clusters.
 #' @param verbose Verbose running.
 #' @param collect.stats Whether to save or not running statistics.
+#' @param reference.patterns Matrix of reference patterns to track correlation of centers against. 
+#'     Pattern per row. Number of columns should be the sames as in E.prep.
 #' @return results$modules -- Metabolic modules.
 #' @return results$nets -- Scored networks.
 #' @return results$patterns.pos -- Modules' patterns (genes with positive score only considered).
@@ -271,7 +278,7 @@ gamClustering <- function(E.prep,
                           cur.centers,
                           
                           start.base = 0.5,
-                          base.dec = 0.05,
+                          base.dec = 0.1,
                           max.module.size = 50,
                           
                           cor.threshold = 0.8,
@@ -282,7 +289,8 @@ gamClustering <- function(E.prep,
                           
                           show.intermediate.clustering = TRUE,
                           verbose = TRUE,
-                          collect.stats = TRUE
+                          collect.stats = TRUE,
+                          reference.patterns = NULL
                           ){
   
   flog.info("GAM-CLUSTERING starts here.", name = "stats.logger")
@@ -299,6 +307,14 @@ gamClustering <- function(E.prep,
     while (T) {
       
       flog.info("[*] Iteration %s", iteration, name = "stats.logger")
+      
+      if (!is.null(reference.patterns)) {
+        flog.info("correlations with references: %s", 
+                  paste0(matrixStats::colMaxs(cosine(cur.centers, 
+                                                          reference.patterns)),
+                                              collapse =" "),
+                  name = "stats.logger")
+      }
       
       # 0. PREPARE ENVIRONMENT
 
@@ -319,14 +335,9 @@ gamClustering <- function(E.prep,
       
       # 1. CALCULATE CORRELATIONS -> DISTANCES -> SCORES
 
-      # the projection of genes onto the centroids (measures of similarity between each gene and each centroid, cosine similarity between the two vectors):
-      m <- cur.centers %*% t(E.prep) # 32 x samples * samples x genes = 32 x genes
-      # ensure that the similarities between genes & centroids in m are not biased by differences in the magnitudes of ...
-      # ...gene expression values (normalizes the columns of m):
-      m <- m / sqrt(max(rowSums(E.prep**2))) # scales the rows of m by their Euclidean lengths -> m is [-1, 1]
-      # ...centroid values (normalizes the rows of m):
-      m <- sweep(x = m, MARGIN = 1, FUN = '/', STATS = sqrt(rowSums(cur.centers**2)))
-
+      # m <- corFromPrep(cur.centers, E.prep)
+      m <- cosine(cur.centers, E.prep)
+      
       dist.to.centers <- 1-m
       dist.to.centers[dist.to.centers < 1e-10] <- 0
 
@@ -389,7 +400,7 @@ gamClustering <- function(E.prep,
         iter.stats[[iteration]] <- iter.stats_add
       }
       if (verbose) {
-        flog.info(">> base was equal to: %s", base, 
+        flog.info(">> base was equal to: %.2g", base, 
                   name = "stats.logger")
         flog.info(">> number of modules was equal to: %s", length(ms_mods), 
                   name = "stats.logger")
@@ -449,6 +460,14 @@ gamClustering <- function(E.prep,
 
       cur.centers <- rev$centers.pos
       
+      if (!is.null(reference.patterns)) {
+        flog.info("updated correlations with references (before potential merging): %s", 
+                  paste0(matrixStats::colMaxs(cosine(cur.centers, 
+                                                          reference.patterns)),
+                         collapse =" "),
+                  name = "stats.logger")
+      }
+      
       iteration <- iteration + 1
       
       if (verbose) {flog.info(">> max diff: %s", round(diff, 2), name = "stats.logger")}
@@ -466,12 +485,13 @@ gamClustering <- function(E.prep,
     biggest.one <- max(sapply(ms_mods, function(m) ulength(igraph::E(m)$gene))) 
     
     if (biggest.one > max.module.size) {
-      base <- base - base.dec
+      base <- base - base.dec * base
     }
     
     # (ii) CORRELATED ONES: 
     
-    centers.cors <- cor(t(cur.centers))
+    # centers.cors <- cor(t(cur.centers))
+    centers.cors <- cosine(cur.centers)
     diag(centers.cors) <- 0
     correlation.max <- apply(centers.cors, 1, max, na.rm=T)
     
@@ -494,20 +514,39 @@ gamClustering <- function(E.prep,
                             modules = rev$modules,
                             scale = FALSE,
                             center = FALSE,
-                            verbose = verbose)
+                            verbose = verbose,
+                            gesecaSeed = 0)
       
+      # TODO: geseca is randomized, there can be instabilities of comparing with a threshold
+      # currently using sampleSize=1001 for more stability, but size-based thresholds
+      # can be precomputed
       good <- gesecaRes$pathway[which(gesecaRes$padj < p.adj.val.threshold)]
       bad <- rownames(cur.centers)[!rownames(cur.centers) %in% good]
-      
+
       if (length(bad) == 0 & biggest.one > max.module.size) {next} 
       if (length(bad) == 0 & biggest.one <= max.module.size) {break} 
       if (length(bad) != 0 & nrow(cur.centers) > 1) {
         
-        max.cor.mod1 <- as.integer(gsub("c.pos", "", bad[which.max(apply(centers.cors, 1, max, na.rm=T)[bad])]))
-        max.cor.mod2 <- which.max(centers.cors[max.cor.mod1, ])
-        cur.centers <- updCenters(cur.centers = cur.centers, 
-                                  m1 = max.cor.mod1, m2 = max.cor.mod2, 
-                                  E.prep = E.prep, ms_mods = ms_mods)
+        m <- cosine(cur.centers, E.prep)
+        is.positive <- (1 - m < base)
+        # number of genes with potentially positive scores in two modules
+        gene.overlaps <- crossprod(t(is.positive)) 
+        diag(gene.overlaps) <- 0
+        
+        if (max(gene.overlaps[bad, ]) > 0) {
+          # There is some overlap, we can try to merge a bad module with the good one,
+          # without losing the genes from the bad one (and not destroying good one too much).
+          # It also means that the centers are pretty similar.
+          max.cor.mod1 <- as.integer(gsub("c.pos", "", bad[which.max(apply(gene.overlaps, 1, max, na.rm=T)[bad])]))
+          max.cor.mod2 <- which.max(gene.overlaps[max.cor.mod1, ])
+          cur.centers <- updCenters(cur.centers = cur.centers, 
+                                    m1 = max.cor.mod1, m2 = max.cor.mod2, 
+                                    E.prep = E.prep, ms_mods = ms_mods)
+        } else {
+          # No point in merging, let's remove module with the least number of positive genes. 
+          to.remove <- names(which.min(rowSums(is.positive)[bad]))
+          cur.centers <- cur.centers[rownames(cur.centers) != to.remove, ]
+        }
       } else {
         saveStats(work.dir, rev, gesecaRes, iter.stats)
         message.string <- "[Attention!] No modules found.\n
@@ -543,7 +582,8 @@ gamClustering <- function(E.prep,
                         modules = modules,
                         scale = FALSE,
                         center = FALSE,
-                        verbose = verbose)
+                        verbose = verbose,
+                        gesecaSeed = 0)
   
   order_idx <- as.numeric(gsub("c.pos", "", gesecaRes$pathway))
   

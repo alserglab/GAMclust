@@ -10,6 +10,23 @@ seq_batch_solver <- function(mwcs_solver) {
   function(instances) { lapply(instances, mwcsr::solve_mwcsp, solver=mwcs_solver) }
 }
 
+#' Calculate cosine similarity between rows of `a` and `b` (`b` could be a vector)
+#' @param a matrix
+#' @param b matrix or vector, if null, then `b` is set to be equal to `a`
+#' @returns matrix of cosine distances between rows of `a` and rows of `b`
+#' @keywords internal
+cosine <- function(a, b=NULL) {
+  if (is.null(b)) {
+    b <- a
+  }
+  if (is.vector(b)) {
+    b <- t(b)
+  }
+  m <- a %*% t(b) 
+  m <- sweep(x = m, MARGIN = 2, FUN = '/', STATS = sqrt(rowSums(b**2)))
+  m <- sweep(x = m, MARGIN = 1, FUN = '/', STATS = sqrt(rowSums(a**2)))
+  m
+}
 
 getCenter <- function(gene.exprs,
                       cluster.genes=seq_len(nrow(gene.exprs)),
@@ -71,7 +88,8 @@ doGeseca <- function(E.prep,
                      modules,
                      scale = FALSE,
                      center = FALSE,
-                     verbose = TRUE) {
+                     verbose = TRUE,
+                     gesecaSeed = NULL) {
   
   E.prep_filtered <- E.prep[rownames(E.prep) %in% network.prep$gene, , drop = F]
 
@@ -79,14 +97,36 @@ doGeseca <- function(E.prep,
     lapply(modules, function(cm) {igraph::E(cm)$gene}), 
     paste0("c.pos", seq_along(modules)))
   
-  suppressWarnings(gesecaRes <- fgsea::geseca(pathways = modules_path,
-                                              E = E.prep_filtered,
-                                              scale = scale,
-                                              center = center))
+  if (!is.null(gesecaSeed)) {
+    gesecaRes <- rbindlist(lapply(seq_along(modules_path), 
+                           function(i) {
+                             if (exists(".Random.seed", envir = .GlobalEnv)) {
+                               old_seed <- get(".Random.seed", envir = .GlobalEnv)
+                               # Ensure it restores when the function finishes or errors out
+                               on.exit(assign(".Random.seed", old_seed, envir = .GlobalEnv))
+                             }
+                             set.seed(gesecaSeed)
+                             suppressWarnings(fgsea::geseca(pathways = modules_path[i],
+                                           E = E.prep_filtered,
+                                           scale = scale,
+                                           center = center,
+                                           sampleSize=1001))
+                           }))
+    gesecaRes <- gesecaRes[order(pval), ]
+  } else {
+    suppressWarnings(gesecaRes <- fgsea::geseca(pathways = modules_path,
+                                                E = E.prep_filtered,
+                                                scale = scale,
+                                                center = center,
+                                                sampleSize=1001)) # higher accuracy for better stability around threshold
+    
+  }
+  
+                              
   
   if(verbose){
     flog.info(">> geseca padjs were in range: %s", 
-              paste(round(range(gesecaRes$padj), 5), collapse = "-"),
+              paste(sprintf("%.2g", range(gesecaRes$padj)), collapse = " - "),
               name = "stats.logger")}
   
   gesecaRes

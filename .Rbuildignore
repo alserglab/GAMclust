@@ -4,3 +4,5 @@
 ^vignettes/work$
 ^docs$
 ^_pkgdown\.yml$
+^pkgdown$
+^\.github$

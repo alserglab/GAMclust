@@ -13,9 +13,9 @@ preClustering(
 )
 }
 \arguments{
-\item{E.prep}{Expression matrix after the `prepareData()` function.}
+\item{E.prep}{Expression matrix after the \code{prepareData()} function.}
 
-\item{network.prep}{Network edge table driven from `prepareNetwork()` function.}
+\item{network.prep}{Network edge table driven from \code{prepareNetwork()} function.}
 
 \item{initial.number.of.clusters}{The number of clusters for the initial approximation of modules.}
 

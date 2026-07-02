@@ -31,10 +31,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, include=FALSE}
-options(timeout=7000)
-```
-
 Install GAMclust package:
 
 ```{r, eval=FALSE}
@@ -102,7 +98,7 @@ solver <- mwcsr::rnc_solver()
 cplex.dir <- "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
-```{r, include=FALSE, eval=T}
+```{r, include=FALSE}
 if (file.exists("cplex_path.R")) source("cplex_path.R") 
 ```
 
@@ -113,7 +109,7 @@ solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 (5) set working directory where the results will be saved to.
 
 ```{r, work-dir}
-work.dir <- "results_sc"
+work.dir <- "results-sc"
 dir.create(work.dir, showWarnings = F, recursive = T)
 ```
 
@@ -152,19 +148,11 @@ In case of [preprocessing multi-sample data](https://satijalab.org/seurat/articl
 
 Let's load already preprocessed data.
 
-```{r, data-load-local, message=FALSE, error=FALSE, include=FALSE}
-seurat_object <- readRDS("/mnt/data/e.chikina/GAM_clustering/data/tms12k.rds")
-
-E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
-                                    assay = "SCT",
-                                    layer = "scale.data"))
-
-nrow(E) # ! make sure this value is in range from 6,000 to 12,000
-
-E[1:3, 1:3]
+```{r, include=FALSE}
+options(timeout=7000)
 ```
 
-```{r, data-load, message=FALSE, error=FALSE, eval=FALSE}
+```{r, data-load, message=FALSE, error=FALSE}
 seurat_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/tms12k.rds"))
 
 E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
