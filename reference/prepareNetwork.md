@@ -1,6 +1,12 @@
 # Prepare network
 
-Prepare network
+Constructs a metabolic interaction network tailored to the analyzed
+dataset. The function integrates network topology with
+gene–enzyme–reaction annotations, removes filtered metabolites, and
+retains only genes present in the processed expression matrix. Networks
+can be represented at either the metabolite or atom level. The final
+output corresponds to the largest connected component of the metabolic
+network and serves as the graph structure for GAM-clustering.
 
 ## Usage
 

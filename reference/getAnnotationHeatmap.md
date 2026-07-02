@@ -1,6 +1,12 @@
 # Heatmap for annotated pathways
 
-Heatmap for annotated pathways
+Builds a heatmap summarizing pathway annotations across all identified
+modules. The visualization displays the proportion of module genes
+associated with each enriched pathway, enabling rapid comparison of
+functional themes between modules. Filtering options allow users to
+restrict displayed pathways based on adjusted p-values and gene overlap
+thresholds. The resulting heatmap provides a compact overview of the
+functional landscape revealed by GAM-clustering.
 
 ## Usage
 

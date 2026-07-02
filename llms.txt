@@ -21,9 +21,9 @@ Tabula Muris data can be explored
 
 # Installation
 
-`GAMclust` package can be insttalled from GitHub:
+`GAMclust` package can be installed from GitHub:
 
-`{r, eval=FALSE} devtools::install_github("alserglab/GAMclust")`
+    devtools::install_github("alserglab/GAMclust")
 
 # Usage
 

@@ -1,6 +1,12 @@
 # Compare two GAM-clustering runs
 
-Compare two GAM-clustering runs
+Compares the results of two independent GAM-clustering analyses. The
+function evaluates module overlap, similarity indices, and, when
+applicable, correlations between module expression patterns. Comparisons
+can be performed using either all module genes or only positively scored
+genes. A combined summary figure is generated to facilitate assessment
+of module reproducibility and consistency across datasets or parameter
+settings.
 
 ## Usage
 

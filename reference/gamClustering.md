@@ -1,6 +1,14 @@
 # GAM-clustering analysis
 
-GAM-clustering analysis
+Performs the core GAM-clustering procedure to identify transcriptionally
+coordinated metabolic modules. Starting from initial expression
+patterns, the algorithm iteratively scores genes, solves SGMWCS
+optimization problems on the metabolic network, and updates
+module-specific expression profiles until convergence. Additional
+refinement steps merge highly similar modules, remove uninformative
+patterns, and control module size. The function returns final metabolic
+modules, scored networks, module expression patterns, and detailed
+iteration statistics.
 
 ## Usage
 
@@ -102,3 +110,20 @@ only considered).
 results\$patterns.all – Modules' patterns (all genes considered).
 
 results\$iter.stats – Statistics from iterations.
+
+## Parameter tuning
+
+There is a set of parameters which determine the size and number of the
+final modules. We recommend starting with the default settings, but the
+following adjustments may be useful:
+
+- If you consider final modules to be too small or too big and it
+  complicates interpretation for you, you can either increase or reduce
+  by 10 units the max.module.size parameter.
+
+- If among final modules you consider presence of any modules with too
+  similar patterns, you can reduce by 0.1 units the cor.threshold
+  parameter.
+
+- If among final modules you consider presence of any uninformative
+  modules, you can reduce by 10 times the p.adj.val.threshold parameter.

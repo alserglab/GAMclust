@@ -1,6 +1,11 @@
 # Get files with modules' graphs
 
-Get files with modules' graphs
+Creates graphical representations of the identified metabolic modules.
+For each module, the function annotates genes and metabolites, generates
+network layouts, and exports the results in multiple formats suitable
+for visualization and downstream analysis. Supported outputs include
+PDF, PNG, SVG, GraphML, and XGMML files. These visualizations facilitate
+biological interpretation of the detected metabolic subnetworks.
 
 ## Usage
 

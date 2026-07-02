@@ -1,11 +1,23 @@
 # Get files with modules' annotations
 
-Get files with modules' annotations
+Annotates metabolic modules using pathway enrichment analysis. For each
+module, over-representation analysis is performed against the pathway
+collection contained in the network annotation, followed by pathway
+redundancy reduction. The function exports pathway tables containing
+significantly enriched biological processes and their associated module
+genes. These annotations help connect discovered modules to known
+metabolic functions.
 
 ## Usage
 
 ``` r
-getAnnotationTables(network.annotation, nets, work.dir, padj.threshold = Inf)
+getAnnotationTables(
+  network.annotation,
+  nets,
+  work.dir,
+  pathways = NULL,
+  padj.threshold = Inf
+)
 ```
 
 ## Arguments
@@ -22,6 +34,11 @@ getAnnotationTables(network.annotation, nets, work.dir, padj.threshold = Inf)
 
   Working directory where files with module genes are (results will be
   saved here as well).
+
+- pathways:
+
+  Optional custom list of pathways for enrichment analysis. If NULL
+  (default), pathways are taken from `network.annotation$pathways`.
 
 - padj.threshold:
 

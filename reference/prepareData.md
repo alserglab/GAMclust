@@ -1,6 +1,12 @@
 # Prepare gene expression matrix
 
-Prepare gene expression matrix
+Prepares a gene expression matrix for GAM-clustering analysis. The
+function optionally converts gene identifiers to the annotation format
+used by the metabolic network, removes duplicates, retains the most
+highly expressed genes, and standardizes expression values. Biological
+replicates can be collapsed by averaging, and dimensionality reduction
+can be applied using PCA. The resulting matrix contains only processed
+features suitable for downstream network-based module discovery.
 
 ## Usage
 
