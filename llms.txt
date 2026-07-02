@@ -61,3 +61,9 @@ Examples of applying `GAMclust` to different type of data:
 - [`seq_batch_solver()`](https://github.com/alserglab/GAMclust/reference/seq_batch_solver.md)
   : Function for batch solving SGMWCS problems
 
+# Articles
+
+### All vignettes
+
+- [GAM-clustering reanalysis of ImmGen Open Source bulk RNA-Seq
+  data](https://github.com/alserglab/GAMclust/articles/GAMclust_tutorial_BULK.md):
