@@ -1,4 +1,4 @@
-# GAM-clustering reanalysis of ImmGen Open Source bulk RNA-Seq data
+# GAM-clustering reanalysis Of metabolic Tabula Muris Senis single cell RNA-seq data
 
 Install GAMclust package:
 
@@ -14,7 +14,10 @@ library(gatom)
 library(mwcsr)
 library(fgsea)
 library(data.table)
+library(Seurat)
+library(BiocFileCache)
 library(futile.logger)
+
 
 set.seed(42)
 ```
@@ -101,7 +104,7 @@ solver](https://www.ibm.com/products/ilog-cplex-optimization-studio)
 
 ``` r
 
-cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
+cplex.dir <- "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
 ``` r
@@ -113,7 +116,7 @@ solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 
 ``` r
 
-work.dir <- "results-bulk"
+work.dir <- "results-sc"
 dir.create(work.dir, showWarnings = F, recursive = T)
 ```
 
@@ -145,22 +148,37 @@ setup_logger(log.file.path = log.file, logger.name = "stats.logger")
 
 GAMclust works with bulk, single cell and spatial RNA-seq data.
 
-This vignette shows how to process bulk RNA-seq data on the example of
-[ImmGen Open Source](http://artyomovlab.wustl.edu/immgen-met/) data
-reanalysis.
+This vignette shows how to process single cell RNA-seq data on the
+example of [Tabula Muris
+Senis](http://artyomovlab.wustl.edu/immgen-met/) data reanalysis.
 
-Let’s load the data.
+For single cell data, take 6,000-12,000 genes for the GAM-clustering
+analysis. To do this while [preprocessing data with Seurat
+pipeline](https://satijalab.org/seurat/articles/sctransform_vignette),
+set `variable.features.n = 12000` in
+[`SCTransform()`](https://satijalab.org/seurat/reference/SCTransform.html)
+function. In case of [preprocessing multi-sample
+data](https://satijalab.org/seurat/articles/integration_introduction),
+set `nfeatures=12000` in
+[`SelectIntegrationFeatures()`](https://satijalab.org/seurat/reference/SelectIntegrationFeatures.html)).
 
-For bulk RNA-seq cell data, take 12,000-15,000 genes for the
-GAM-clustering analysis.
+Let’s load already preprocessed data.
 
 ``` r
 
-expression_set_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/243_es.top12k.rds"))
+bfc <- BiocFileCache("./cache", ask = FALSE)
+path <- bfcrpath(
+  bfc,
+  "http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/tms_sct12k.rds"
+)
 
-E <- Biobase::exprs(expression_set_object)
+seurat_object <- readRDS(path)
 
-nrow(E) # ! make sure this value is in range from 10,000 to 15,000
+E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
+                                    assay = "SCT",
+                                    layer = "scale.data"))
+
+nrow(E) # ! make sure this value is in range from 6,000 to 12,000
 ```
 
     # [1] 12000
@@ -170,30 +188,39 @@ nrow(E) # ! make sure this value is in range from 10,000 to 15,000
 E[1:3, 1:3]
 ```
 
-    #        MF.64pLYVEpIIn.Ao.1 MF.64pLYVEpIIn.Ao.2 MF.64pLYVEpIIn.Ao.3
-    # Actb              14.77450            14.97466            14.80920
-    # Cst3              12.73106            12.80513            12.62843
-    # Eef1a1            12.14864            12.38202            12.33756
+    #        AACCATGAGATCCCAT-1-0-0-0 AACCATGTCAGAGGTG-1-0-0-0
+    # Sox17                -0.1865187               -0.2478802
+    # Mrpl15               -0.4440852                0.3323707
+    # Lypla1               -0.4182570               -0.5818529
+    #        AAGGTTCTCCTAGAAC-1-0-0-0
+    # Sox17                -0.2390427
+    # Mrpl15               -0.5901840
+    # Lypla1               -0.5602515
 
 Genes in your dataset may be named as Symbol, Entrez, Ensembl or RefSeq
 IDs. One of these names should be specified as value of `gene.id.type`
 parameter in
 [`prepareData()`](https://github.com/alserglab/GAMclust/reference/prepareData.md).
 
+If you analyse singe cell or spatial RNA-seq data, please set
+`use.PCA=TRUE` in
+[`prepareData()`](https://github.com/alserglab/GAMclust/reference/prepareData.md).
+
 ``` r
 
 E.prep <- prepareData(E = E,
                       gene.id.type = "Symbol",
-                      use.PCA = FALSE,
+                      use.PCA = TRUE,
+                      use.PCA.n = 50,
                       network.annotation = network.annotation)
 
 E.prep[1:3, 1:3]
 ```
 
-    #       MF.64pLYVEpIIn.Ao.1 MF.64pLYVEpIIn.Ao.2 MF.64pLYVEpIIn.Ao.3
-    # 11461           0.7947992           1.0375496           0.8368845
-    # 13010           0.3038730           0.3471841           0.2438681
-    # 13627           0.4187557           0.6674637           0.6200901
+    #               PC1      PC2        PC3
+    # 16176  -0.0419378 2.222356 -0.7472891
+    # 278180 -1.2188519 2.806405  1.6716989
+    # 56744  -1.5140244 3.368009  1.5328317
 
 #### Preparing network
 
@@ -211,9 +238,9 @@ network.prep <- prepareNetwork(E = E.prep,
                                gene2reaction.extra = gene2reaction.extra) # for combined network
 ```
 
-    # INFO [2026-07-06 16:01:06] Global metabolite network contains 6583 edges.
+    # INFO [2026-07-06 21:15:03] Global metabolite network contains 6754 edges.
 
-    # INFO [2026-07-06 16:01:06] Largest connected component of this global network contains 1430 nodes and 5121 edges.
+    # INFO [2026-07-06 21:15:03] Largest connected component of this global network contains 1397 nodes and 5139 edges.
 
 #### Preclustering
 
@@ -233,17 +260,17 @@ cur.centers <- preClustering(E.prep = E.prep,
                              network.annotation = network.annotation)
 ```
 
-    # INFO [2026-07-06 16:01:06] 1160 metabolic genes from the analysed dataset mapped to this component.
+    # INFO [2026-07-06 21:15:03] 1123 metabolic genes from the analysed dataset mapped to this component.
 
 ``` r
 
 cur.centers[1:3, 1:3]
 ```
 
-    #   MF.64pLYVEpIIn.Ao.1 MF.64pLYVEpIIn.Ao.2 MF.64pLYVEpIIn.Ao.3
-    # 1         -0.09284514         -0.12763246          0.02188235
-    # 2          0.03432400          0.02773624          0.13477218
-    # 3          0.78988889          0.80944803          0.87514519
+    #         PC1       PC2         PC3
+    # 1 -4.140217 -3.588960  0.47784732
+    # 2 -3.374871  1.319177 -1.89015590
+    # 3 -4.281918 -0.421322 -0.08240903
 
 ``` r
 
@@ -254,7 +281,7 @@ pheatmap::pheatmap(
 ```
 
 ![plot of chunk
-pre-clustering](GAMclust_tutorial_BULK_files/pre-clustering-1.png)
+pre-clustering](GAMclust_tutorial_SC_files/pre-clustering-1.png)
 
 ### GAM-clustering analysis
 
@@ -275,7 +302,7 @@ There is a set of parameters which determine the size and number of your
 final modules. We recommend you to start with the default settings,
 however you can adjust them based on your own preferences:
 
-1.  If you consider final modules to be too small or too big and it
+1.  If you consider final modules to bee too small or too big and it
     complicates interpretation for you, you can either increase or
     reduce by 10 units the `max.module.size` parameter.
 
@@ -294,18 +321,18 @@ results <- gamClustering(E.prep = E.prep,
                          cur.centers = cur.centers,
                          
                          start.base = 0.5,
-                         base.dec = 0.1,
+                         base.dec = 0.05,
                          max.module.size = 50,
 
-                         cor.threshold = 0.7,
+                         cor.threshold = 0.8,
                          p.adj.val.threshold = 1e-5,
 
                          batch.solver = seq_batch_solver(solver),
                          work.dir = work.dir,
                          
-                         show.intermediate.clustering = F,
-                         verbose = T,
-                         collect.stats = T)
+                         show.intermediate.clustering = FALSE,
+                         verbose = FALSE,
+                         collect.stats = TRUE)
 ```
 
 ### Visualizing and exploring the GAM-clustering results
@@ -343,11 +370,9 @@ getGraphs(modules = results$modules,
 
     # Graphs for module 8 are built
 
-    # Graphs for module 9 are built
+Example of the graph of the third module:
 
-Example of the graph of the first module:
-
-![plot of chunk unnamed-chunk-6](GAMclust_tutorial_BULK_files/m.1.svg)
+![plot of chunk example-module](GAMclust_tutorial_SC_files/m.3.svg)
 
 ##### Get gene tables:
 
@@ -382,73 +407,73 @@ m.gene.list <- getGeneTables(modules = results$modules,
 
     # Gene tables for module 8 are produced
 
-    # Gene tables for module 9 are produced
-
-Example of the gene table of the first module:
+Example of the gene table of the third module:
 
 ``` r
 
-head(GAMclust:::read.tsv(file.path(work.dir, "m.1.genes.tsv"))) |>
+head(GAMclust:::read.tsv(file.path(work.dir, "m.3.genes.tsv"))) |>
   kableExtra::kable() |>
   kableExtra::kable_styling()
 ```
 
-| symbol  | Entrez |    score |       cor |
-|:--------|-------:|---------:|----------:|
-| Plod1   |  18822 | 2.211137 | 0.9426139 |
-| Gbgt1   | 227671 | 1.545965 | 0.9089996 |
-| Pla2g15 | 192654 | 1.501044 | 0.9061216 |
-| Oplah   |  75475 | 1.120957 | 0.8778247 |
-| Ptgs1   |  19224 | 1.081628 | 0.8744483 |
-| Slc2a8  |  56017 | 1.042379 | 0.8709858 |
+| symbol | Entrez |     score |       cor |
+|:-------|-------:|----------:|----------:|
+| Nudt5  |  53893 | 1.6042778 | 0.9406440 |
+| Pole2  |  18974 | 1.4296715 | 0.9383090 |
+| Prps1  |  19139 | 1.4135713 | 0.9341166 |
+| Paics  |  67054 | 1.4146098 | 0.9325548 |
+| Ctps   |  51797 | 1.0938273 | 0.9229224 |
+| Idh3a  |  67834 | 0.5849869 | 0.9184430 |
 
-##### Get plots of patterns and individual genes expression:
-
-Heatmap for patterns of all modules:
+##### Get plots of patterns:
 
 ``` r
 
-patterns <- results$patterns.pos
-
-pheatmap::pheatmap(
-  GAMclust:::normalize.rows(patterns),
-  cluster_rows=F, cluster_cols=F,
-  show_rownames=T, show_colnames=T)
-```
-
-![plot of chunk
-plot-patterns](GAMclust_tutorial_BULK_files/plot-patterns-1.png)
-
-Get plots of individual genes expression
-
-``` r
-
-for (i in seq_along(m.gene.list)) {
-
-  heatmap <- E[m.gene.list[[i]], , drop=F]
-
-  pheatmap::pheatmap(
-    GAMclust:::normalize.rows(heatmap),
-    cluster_rows=F, cluster_cols=F,
-    file=sprintf("%s/m.%s.genes.png", work.dir, i),
-    width=10, height=5,
-    show_rownames=T, show_colnames=T)
+for(i in 1:length(m.gene.list)){
+  
+  print(fgsea::plotCoregulationProfileReduction(m.gene.list[[i]], 
+                                               seurat_object, 
+                                               title = paste0("module ", i),
+                                               raster = TRUE,
+                                               reduction = "pumap"))
 }
 ```
 
-Example of the heatmap of the first module:
+![plot of chunk
+figures-side](GAMclust_tutorial_SC_files/figures-side-1.png)![plot of
+chunk figures-side](GAMclust_tutorial_SC_files/figures-side-2.png)![plot
+of chunk
+figures-side](GAMclust_tutorial_SC_files/figures-side-3.png)![plot of
+chunk figures-side](GAMclust_tutorial_SC_files/figures-side-4.png)![plot
+of chunk
+figures-side](GAMclust_tutorial_SC_files/figures-side-5.png)![plot of
+chunk figures-side](GAMclust_tutorial_SC_files/figures-side-6.png)![plot
+of chunk
+figures-side](GAMclust_tutorial_SC_files/figures-side-7.png)![plot of
+chunk figures-side](GAMclust_tutorial_SC_files/figures-side-8.png)
+
+##### Get plots of individual genes expression (example for the third module):
 
 ``` r
 
-pheatmap::pheatmap(
-  GAMclust:::normalize.rows(E[m.gene.list[[1]], , drop=F]),
-  show_rownames=T, show_colnames=T)
+Seurat::DefaultAssay(seurat_object) <- "SCT"
+
+i <- 3
+
+Seurat::FeaturePlot(seurat_object,
+                    layer = "data",
+                    reduction = "pumap",
+                    order = T,
+                    features = m.gene.list[[i]],
+                    ncol = 6,
+                    raster = TRUE,
+                    combine = TRUE)
 ```
 
-![plot of chunk
-unnamed-chunk-8](GAMclust_tutorial_BULK_files/unnamed-chunk-8-1.png)
+    # Error in `Seurat::FeaturePlot()`:
+    # ! unused argument (layer = "data")
 
-##### Get annotation tables and annotation heatmap for all modules:
+##### Get tables and plots with annotation of modules:
 
 Functional annotation of obtained modules is done based on KEGG and
 Reactome canonical metabolic pathways.
@@ -476,13 +501,11 @@ getAnnotationTables(network.annotation = network.annotation,
 
     # Pathway annotation for module 8 is produced
 
-    # Pathway annotation for module 9 is produced
-
-Example of the annotation table of the first module:
+Example of the annotation table of the third module:
 
 ``` r
 
-head(GAMclust:::read.tsv(file.path(work.dir, "m.1.pathways.tsv"))) |>
+head(GAMclust:::read.tsv(file.path(work.dir, "m.3.pathways.tsv"))) |>
   kableExtra::kable() |>
   kableExtra::kable_styling(font_size = 8) |>
   kableExtra::column_spec(1, width = "1.6in") |>
@@ -492,11 +515,11 @@ head(GAMclust:::read.tsv(file.path(work.dir, "m.1.pathways.tsv"))) |>
 
 | pathway | pval | padj | foldEnrichment | overlap | size | overlapGenes |
 |:---|---:|---:|---:|---:|---:|:---|
-| mmu00590: Arachidonic acid metabolism | 0.0000713 | 0.0170328 | 9.250000 | 5 | 10 | Alox5 Ltc4s Pla2g4a Ptgs1 Ggt5 |
-| mmu00511: Other glycan degradation | 0.0025885 | 0.2262868 | 9.250000 | 3 | 6 | Glb1 Hexa Neu1 |
-| mmu00603: Glycosphingolipid biosynthesis - globo and isoglobo series | 0.0043623 | 0.2606492 | 7.928571 | 3 | 7 | Hexa Gbgt1 B3galnt1 |
-| mmu00565: Ether lipid metabolism | 0.0097110 | 0.4641838 | 6.166667 | 3 | 9 | Pla2g4a Pld3 Gdpd1 |
-| mmu00220: Arginine biosynthesis | 0.0502266 | 1.0000000 | 5.285714 | 2 | 7 | Gpt2 Glul |
+| mmu00230: Purine metabolism | 0.0000005 | 0.0000572 | 8.956522 | 8 | 23 | Atic Gart Hprt Prps1 Ppat Pfas Nudt5 Paics |
+| mmu00670: One carbon pool by folate | 0.0000007 | 0.0000572 | 14.045454 | 6 | 11 | Shmt2 Atic Dhfr Gart Tyms Mthfd1l |
+| mmu_M00048: De novo purine biosynthesis, PRPP + glutamine =\> IMP | 0.0000003 | 0.0000572 | 21.458333 | 5 | 6 | Atic Gart Ppat Pfas Paics |
+| mmu_M00035: Methionine degradation | 0.0014477 | 0.0857736 | 25.750000 | 2 | 2 | Dnmt1 Ahcy |
+| mmu_M00020: Serine biosynthesis, glycerate-3P =\> serine | 0.0042396 | 0.1674628 | 17.166667 | 2 | 3 | Psph Psat1 |
 
 Annotation heatmap for all modules:
 
@@ -507,41 +530,37 @@ getAnnotationHeatmap(work.dir = work.dir)
 
     # Processing module 1
 
-    # Module size: 34
+    # Module size: 40
 
     # Processing module 2
 
-    # Module size: 19
+    # Module size: 21
 
     # Processing module 3
 
-    # Module size: 10
+    # Module size: 24
 
     # Processing module 4
 
-    # Module size: 12
+    # Module size: 21
 
     # Processing module 5
 
-    # Module size: 7
+    # Module size: 14
 
     # Processing module 6
 
-    # Module size: 5
+    # Module size: 18
 
     # Processing module 7
 
-    # Module size: 5
+    # Module size: 8
 
     # Processing module 8
 
-    # Module size: 5
+    # Module size: 4
 
-    # Processing module 9
-
-    # Module size: 6
-
-![plot of chunk plot-anno](GAMclust_tutorial_BULK_files/plot-anno-1.png)
+![plot of chunk plot-anno](GAMclust_tutorial_SC_files/plot-anno-1.png)
 
 ##### Compare modules obtained in different runs:
 
@@ -553,7 +572,7 @@ running GAM-clustering on different datasets (then set
 ``` r
 
 modulesSimilarity(dir1 = work.dir,
-                  dir2 = "old_dir",
+                  dir2 = "old.dir",
                   name1 = "new",
                   name2 = "old",
                   same.data = TRUE,
@@ -564,9 +583,9 @@ modulesSimilarity(dir1 = work.dir,
 
 ### Session info
 
-Elapsed time: 41.1 mins.
+Elapsed time: 42.3 mins.
 
-Peak R memory usage: 1.0 GB
+Peak R memory usage: 13.1 GB
 
 ``` r
 
@@ -594,36 +613,59 @@ sessionInfo()
     # [1] stats     graphics  grDevices utils     datasets  methods   base     
     # 
     # other attached packages:
-    # [1] futile.logger_1.4.9 fgsea_1.37.4        mwcsr_0.1.12       
-    # [4] gatom_1.8.4         GAMclust_0.1.0      data.table_1.18.4  
-    # [7] rmarkdown_2.31     
+    #  [1] futile.logger_1.4.9 BiocFileCache_3.0.0 dbplyr_2.5.1       
+    #  [4] Seurat_5.5.0        SeuratObject_5.4.0  sp_2.2-1           
+    #  [7] fgsea_1.37.4        mwcsr_0.1.12        gatom_1.8.4        
+    # [10] GAMclust_0.1.0      data.table_1.18.4   rmarkdown_2.31     
     # 
     # loaded via a namespace (and not attached):
-    #  [1] tidyselect_1.2.1     viridisLite_0.4.3    dplyr_1.2.1         
-    #  [4] farver_2.1.2         blob_1.3.0           Biostrings_2.78.0   
-    #  [7] S7_0.2.2             fastmap_1.2.0        GGally_2.4.0        
-    # [10] XML_3.99-0.23        digest_0.6.39        lifecycle_1.0.5     
-    # [13] rsvg_2.7.0           KEGGREST_1.53.4      RSQLite_3.52.0      
-    # [16] magrittr_2.0.5       compiler_4.5.3       rlang_1.2.0         
-    # [19] tools_4.5.3          igraph_2.3.2         knitr_1.51          
-    # [22] lambda.r_1.2.4       htmlwidgets_1.6.4    bit_4.6.0           
-    # [25] xml2_1.5.2           plyr_1.8.9           RColorBrewer_1.1-3  
-    # [28] BiocParallel_1.44.0  purrr_1.2.2          BiocGenerics_0.56.0 
-    # [31] shinyCyJS_1.0.0      grid_4.5.3           stats4_4.5.3        
-    # [34] ggplot2_4.0.3        scales_1.4.0         cli_3.6.6           
-    # [37] crayon_1.5.3         generics_0.1.4       otel_0.2.0          
-    # [40] rstudioapi_0.17.1    httr_1.4.8           DBI_1.3.0           
-    # [43] cachem_1.1.0         stringr_1.6.0        parallel_4.5.3      
-    # [46] AnnotationDbi_1.72.0 formatR_1.14         XVector_0.50.0      
-    # [49] matrixStats_1.5.0    vctrs_0.7.3          Matrix_1.7-4        
-    # [52] IRanges_2.44.0       S4Vectors_0.48.1     bit64_4.8.0         
-    # [55] BioNet_1.70.0        Rgraphviz_2.54.0     systemfonts_1.3.1   
-    # [58] tidyr_1.3.2          glue_1.8.1           ggstats_0.13.0      
-    # [61] codetools_0.2-20     cowplot_1.2.0        stringi_1.8.7       
-    # [64] gtable_0.3.6         tibble_3.3.1         pillar_1.11.1       
-    # [67] htmltools_0.5.9      Seqinfo_1.0.0        graph_1.88.1        
-    # [70] R6_2.6.1             textshaping_1.0.4    evaluate_1.0.5      
-    # [73] kableExtra_1.4.0     Biobase_2.70.0       lattice_0.22-7      
-    # [76] futile.options_1.0.1 png_0.1-9            pheatmap_1.0.13     
-    # [79] memoise_2.0.1        Rcpp_1.1.1-1.1       fastmatch_1.1-8     
-    # [82] svglite_2.2.2        xfun_0.57            pkgconfig_2.0.3
+    #   [1] RcppAnnoy_0.0.23       splines_4.5.3          later_1.4.8           
+    #   [4] filelock_1.0.3         tibble_3.3.1           polyclip_1.10-7       
+    #   [7] graph_1.88.1           XML_3.99-0.23          fastDummies_1.7.6     
+    #  [10] lifecycle_1.0.5        httr2_1.2.2            globals_0.19.1        
+    #  [13] lattice_0.22-7         MASS_7.3-65            magrittr_2.0.5        
+    #  [16] plotly_4.12.0          httpuv_1.6.17          otel_0.2.0            
+    #  [19] sctransform_0.4.3      spam_2.11-3            spatstat.sparse_3.1-0 
+    #  [22] reticulate_1.46.0      cowplot_1.2.0          pbapply_1.7-4         
+    #  [25] DBI_1.3.0              RColorBrewer_1.1-3     abind_1.4-8           
+    #  [28] Rtsne_0.17             purrr_1.2.2            BiocGenerics_0.56.0   
+    #  [31] rappdirs_0.3.4         IRanges_2.44.0         S4Vectors_0.48.1      
+    #  [34] ggrepel_0.9.8          irlba_2.3.7            listenv_0.10.1        
+    #  [37] spatstat.utils_3.2-3   pheatmap_1.0.13        goftest_1.2-3         
+    #  [40] RSpectra_0.16-2        spatstat.random_3.4-5  fitdistrplus_1.2-6    
+    #  [43] parallelly_1.47.0      svglite_2.2.2          codetools_0.2-20      
+    #  [46] xml2_1.5.2             tidyselect_1.2.1       farver_2.1.2          
+    #  [49] shinyCyJS_1.0.0        matrixStats_1.5.0      stats4_4.5.3          
+    #  [52] spatstat.explore_3.8-0 Seqinfo_1.0.0          jsonlite_2.0.0        
+    #  [55] progressr_0.19.0       ggridges_0.5.7         survival_3.8-3        
+    #  [58] systemfonts_1.3.1      tools_4.5.3            ica_1.0-3             
+    #  [61] Rcpp_1.1.1-1.1         glue_1.8.1             gridExtra_2.3         
+    #  [64] xfun_0.57              dplyr_1.2.1            withr_3.0.2           
+    #  [67] formatR_1.14           fastmap_1.2.0          GGally_2.4.0          
+    #  [70] digest_0.6.39          R6_2.6.1               mime_0.13             
+    #  [73] textshaping_1.0.4      scattermore_1.2        rsvg_2.7.0            
+    #  [76] tensor_1.5.1           spatstat.data_3.1-9    RSQLite_3.52.0        
+    #  [79] tidyr_1.3.2            generics_0.1.4         httr_1.4.8            
+    #  [82] htmlwidgets_1.6.4      ggstats_0.13.0         uwot_0.2.4            
+    #  [85] pkgconfig_2.0.3        gtable_0.3.6           blob_1.3.0            
+    #  [88] lmtest_0.9-40          S7_0.2.2               XVector_0.50.0        
+    #  [91] htmltools_0.5.9        dotCall64_1.2          BioNet_1.70.0         
+    #  [94] scales_1.4.0           kableExtra_1.4.0       Biobase_2.70.0        
+    #  [97] png_0.1-9              spatstat.univar_3.1-7  knitr_1.51            
+    # [100] lambda.r_1.2.4         rstudioapi_0.17.1      reshape2_1.4.5        
+    # [103] nlme_3.1-168           curl_7.1.0             cachem_1.1.0          
+    # [106] zoo_1.8-15             stringr_1.6.0          KernSmooth_2.23-26    
+    # [109] parallel_4.5.3         miniUI_0.1.2           AnnotationDbi_1.72.0  
+    # [112] pillar_1.11.1          grid_4.5.3             vctrs_0.7.3           
+    # [115] RANN_2.6.2             promises_1.5.0         xtable_1.8-8          
+    # [118] cluster_2.1.8.1        Rgraphviz_2.54.0       evaluate_1.0.5        
+    # [121] cli_3.6.6              compiler_4.5.3         futile.options_1.0.1  
+    # [124] rlang_1.2.0            crayon_1.5.3           future.apply_1.20.2   
+    # [127] labeling_0.4.3         plyr_1.8.9             stringi_1.8.7         
+    # [130] viridisLite_0.4.3      deldir_2.0-4           BiocParallel_1.44.0   
+    # [133] Biostrings_2.78.0      lazyeval_0.2.3         spatstat.geom_3.7-3   
+    # [136] Matrix_1.7-4           RcppHNSW_0.6.0         patchwork_1.3.2       
+    # [139] bit64_4.8.0            future_1.70.0          ggplot2_4.0.3         
+    # [142] KEGGREST_1.53.4        shiny_1.13.0           ROCR_1.0-12           
+    # [145] igraph_2.3.2           memoise_2.0.1          fastmatch_1.1-8       
+    # [148] bit_4.6.0
