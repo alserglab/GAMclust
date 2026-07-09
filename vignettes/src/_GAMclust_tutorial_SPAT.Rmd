@@ -49,6 +49,10 @@ library(futile.logger)
 set.seed(42)
 ```
 
+```{r, start-timer}
+startTime <- Sys.time()
+```
+
 ### Preparing working environment
 
 First, please load and initialize all objects required for GAM-clustering analysis:
@@ -99,6 +103,7 @@ cplex.dir <-  "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
 ```{r, include=FALSE}
+cplex.dir <- Sys.getenv("CPLEX_HOME")
 if (file.exists("cplex_path.R")) source("cplex_path.R") 
 ```
 
@@ -145,7 +150,7 @@ This vignette shows how to process spatial RNA-seq data.
 Let's load the data and take 10,000 genes for the GAM-clustering analysis.
 
 ```{r, data-load, message=FALSE, error=FALSE}
-seurat_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/275_T_seurat.rds"))
+seurat_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/275_T_ST_Seurat.rds"))
 
 seurat_object <- Seurat::SCTransform(seurat_object, 
                                      assay = "Spatial", 
@@ -154,7 +159,7 @@ seurat_object <- Seurat::SCTransform(seurat_object,
 
 E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
                                     assay = "SCT",
-                                    slot = "scale.data"))
+                                    layer = "scale.data"))
 
 nrow(E) # ! make sure this value is in range from 6,000 to 12,000
 
@@ -308,7 +313,8 @@ i <- 4
 
 Seurat::SpatialFeaturePlot(seurat_object, 
                            features = m.gene.list[[i]], 
-                           pt.size.factor = 2, stroke = 0.01, alpha = 0.7,
+                           pt.size.factor = 2, stroke = 0.01, alpha = 1,
+                           image.alpha = 0,
                            ncol = 8)
 ```
 
@@ -352,4 +358,14 @@ modulesSimilarity(dir1 = work.dir,
                   use.genes.with.pos.score = TRUE,
                   work.dir = work.dir,
                   file.name = "comparison.png")
+```
+
+### Session info
+
+Elapsed time: `r format(Sys.time() - startTime, digits=3)`.
+
+Peak R memory usage: `r sprintf("%.1f GB", sum(gc()[,6])/1000)`
+
+```{r}
+sessionInfo()
 ```
