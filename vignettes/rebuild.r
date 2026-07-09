@@ -72,6 +72,7 @@ build_vignette <- function(src, quiet=TRUE) {
 set_path()
 # clean()
 
-build_vignette("./src/_GAMclust_tutorial_BULK.Rmd", quiet=FALSE)
+build_vignette("./src/_Algorithm_overview.Rmd", quiet=FALSE)
+# build_vignette("./src/_GAMclust_tutorial_BULK.Rmd", quiet=FALSE)
 # build_vignette("./src/_GAMclust_tutorial_SC.Rmd", quiet=FALSE)
 # build_vignette("./src/_GAMclust_tutorial_SPAT.Rmd", quiet=FALSE)
