@@ -29,7 +29,7 @@ Examples of applying `GAMclust` to different type of data:
 GAMclust identifies coordinated metabolic modules by integrating gene co-expression with the topology of the KEGG metabolic network. The algorithm first initializes $k$ representative expression patterns using k-means ($k = 32$ by default), then scores each gene $g_i$ against every pattern $c_j$ are calculated by
 
 $$
-d\left( g_{i}, c_{j} \right) = 1 - \operatorname{cor}\left( g_{i}, c_{j} \right)
+d\left( g_{i}, c_{j} \right) = 1 - \mathrm{cor}\left( g_{i}, c_{j} \right)
 $$
 
 $$
@@ -41,7 +41,7 @@ d'\left( g_{i}, c_{j} \right) = \min_{k \neq j,\; k \in (0, M)} \left( d\left( g
 $$
 
 $$
-\operatorname{score}\left( g_{i}, c_{j} \right) = -\log\frac{d\left( g_{i}, c_{j} \right)}{d'\left( g_{i}, c_{j} \right)}
+\mathrm{score}\left( g_{i}, c_{j} \right) = -\log\frac{d\left( g_{i}, c_{j} \right)}{d'\left( g_{i}, c_{j} \right)}
 $$
 
 where 
