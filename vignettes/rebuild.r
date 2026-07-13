@@ -74,4 +74,4 @@ set_path()
 
 # build_vignette("./src/_GAMclust_tutorial_BULK.Rmd", quiet=FALSE)
 # build_vignette("./src/_GAMclust_tutorial_SC.Rmd", quiet=FALSE)
-# build_vignette("./src/_GAMclust_tutorial_SPAT.Rmd", quiet=FALSE)
+build_vignette("./src/_GAMclust_tutorial_SPAT.Rmd", quiet=FALSE)

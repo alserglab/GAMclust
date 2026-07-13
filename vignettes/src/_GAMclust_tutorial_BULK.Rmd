@@ -48,6 +48,10 @@ library(futile.logger)
 set.seed(42)
 ```
 
+```{r, start-timer}
+startTime <- Sys.time()
+```
+
 ### Preparing working environment
 
 First, please load and initialize all objects required for GAM-clustering analysis:
@@ -254,7 +258,7 @@ getGraphs(modules = results$modules,
 
 Example of the graph of the first module:
 
-```{r, out.width="80%", echo=FALSE, fig.align='center'} 
+```{r, example-module, out.width="80%", echo=FALSE, fig.align='center'} 
 knitr::include_graphics(sprintf("%s/m.1.svg", work.dir))
 ```
 
@@ -361,6 +365,11 @@ modulesSimilarity(dir1 = work.dir,
 ```
 
 ### Session info
+
+Elapsed time: `r format(Sys.time() - startTime, digits=3)`.
+
+Peak R memory usage: `r sprintf("%.1f GB", sum(gc()[,6])/1000)`
+
 
 ```{r}
 sessionInfo()

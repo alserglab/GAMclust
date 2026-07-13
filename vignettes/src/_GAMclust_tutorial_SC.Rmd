@@ -1,5 +1,5 @@
 ---
-title: 'GAM-clustering Tutorial Notebook For Reanalysis Of [Metabolic Tabula Muris Senis](http://artyomovlab.wustl.edu/immgen-met/) Single Cell RNA-Seq Data'
+title: 'GAM-clustering reanalysis Of metabolic Tabula Muris Senis single cell RNA-seq data'
 output:
   html_document:
     df_print: paged
@@ -44,10 +44,17 @@ library(mwcsr)
 library(fgsea)
 library(data.table)
 library(Seurat)
+library(BiocFileCache)
 library(futile.logger)
+
 
 set.seed(42)
 ```
+
+```{r, start-timer}
+startTime <- Sys.time()
+```
+
 
 ### Preparing working environment
 
@@ -99,6 +106,7 @@ cplex.dir <- "/opt/ibm/ILOG/CPLEX_Studio1271"
 ```
 
 ```{r, include=FALSE}
+cplex.dir <- Sys.getenv("CPLEX_HOME")
 if (file.exists("cplex_path.R")) source("cplex_path.R") 
 ```
 
@@ -148,12 +156,14 @@ In case of [preprocessing multi-sample data](https://satijalab.org/seurat/articl
 
 Let's load already preprocessed data.
 
-```{r, include=FALSE}
-options(timeout=7000)
-```
-
 ```{r, data-load, message=FALSE, error=FALSE}
-seurat_object <- readRDS(url("http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/tms12k.rds"))
+bfc <- BiocFileCache("./cache", ask = FALSE)
+path <- bfcrpath(
+  bfc,
+  "http://artyomovlab.wustl.edu/publications/supp_materials/GAMclust/tms_sct12k.rds"
+)
+
+seurat_object <- readRDS(path)
 
 E <- as.matrix(Seurat::GetAssayData(object = seurat_object,
                                     assay = "SCT",
@@ -265,7 +275,7 @@ getGraphs(modules = results$modules,
 
 Example of the graph of the third module:
 
-```{r, out.width="80%", echo=FALSE, fig.align='center'} 
+```{r, example-module, out.width="80%", echo=FALSE, fig.align='center'} 
 knitr::include_graphics(sprintf("%s/m.3.svg", work.dir))
 ```
 
@@ -361,4 +371,15 @@ modulesSimilarity(dir1 = work.dir,
                   use.genes.with.pos.score = TRUE,
                   work.dir = work.dir,
                   file.name = "comparison.png")
+```
+
+### Session info
+
+Elapsed time: `r format(Sys.time() - startTime, digits=3)`.
+
+Peak R memory usage: `r sprintf("%.1f GB", sum(gc()[,6])/1000)`
+
+
+```{r}
+sessionInfo()
 ```
