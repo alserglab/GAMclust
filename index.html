@@ -35,7 +35,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/GAMclust_tutorial_BULK.html">GAM-clustering reanalysis of ImmGen Open Source bulk RNA-Seq data</a></li>
+<li><a class="dropdown-item" href="articles/Algorithm_overview.html">Algorithm overview</a></li>
+    <li><a class="dropdown-item" href="articles/GAMclust_tutorial_BULK.html">GAM-clustering reanalysis of ImmGen Open Source bulk RNA-Seq data</a></li>
     <li><a class="dropdown-item" href="articles/GAMclust_tutorial_SC.html">GAM-clustering reanalysis Of metabolic Tabula Muris Senis single cell RNA-seq data</a></li>
     <li><a class="dropdown-item" href="articles/GAMclust_tutorial_SPAT.html">GAM-clustering Tutorial Notebook For Spatial RNA-Seq Data</a></li>
   </ul>
@@ -56,27 +57,62 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="gam-clustering">GAM-clustering<a class="anchor" aria-label="anchor" href="#gam-clustering"></a>
 </h1></div>
-<p><code>GAMclust</code> is an R package for identifying transcriptionally regulated metabolic modules in complex RNA sequencing datasets.</p>
-<p><code>GAMclust</code> implements a flexible data processing pipeline designed to analyze three major types of RNA-seq data: bulk, single-cell, and spatial. The pipeline takes as an input a gene expression matrix and a global metabolic network. After initial preprocessing, both of these inputs are integrated by the GAM-clustering algorithm, which identifies metabolic subnetworks (modules) with correlated gene expression behaviors. To aid in the interpretation of the results, several post-processing procedures are carried out, including visualization and annotation of the modules.</p>
+<p><code>GAMclust</code> is an R package for identifying transcriptionally regulated metabolic modules in complex gene expression profiling datasets.</p>
+<p><code>GAMclust</code> implements a flexible data processing pipeline designed to analyze three major types of gene expression data: bulk, single-cell, and spatial. The pipeline takes as an input a gene expression matrix and a global metabolic network. After initial preprocessing, both of these inputs are integrated by the GAM-clustering algorithm, which identifies metabolic subnetworks (modules) with correlated gene expression behaviors. To aid in the interpretation of the results, several post-processing procedures are carried out, including visualization and annotation of the modules.</p>
 <p>Interactive results of GAM-clustering analysis of ImmGen Open Source and Tabula Muris data can be explored <a href="http://artyomovlab.wustl.edu/immgen-met/" class="external-link">here</a>, details are in <a href="https://www.cell.com/cell-reports/fulltext/S2211-1247(23)00057-8" class="external-link">Gainullina et al, 2023</a>.</p>
-</div>
-<div class="section level1">
-<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h1>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <p><code>GAMclust</code> package can be installed from GitHub:</p>
-<pre><code><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"alserglab/GAMclust"</span><span class="op">)</span></span></code></pre>
+<pre><code><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"alserglab/GAMclust"</span><span class="op">)</span></span></code></pre>
 </div>
-<div class="section level1">
-<h1 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
-</h1>
+<div class="section level2">
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+</h2>
 <p>Examples of applying <code>GAMclust</code> to different type of data:</p>
 <ul>
-<li>bulk RNA-seq data (<a href="https://rpubs.com/anastasiiaNG/GAMclust_BULK" class="external-link">tutorial</a>),</li>
-<li>single cell RNA-seq data (<a href="https://rpubs.com/anastasiiaNG/GAMclust_SC" class="external-link">tutorial</a>),</li>
-<li>spatial RNA-seq data (<a href="https://rpubs.com/anastasiiaNG/GAMclust_SPAT" class="external-link">tutorial</a>).</li>
+<li>
+<a href="https://alserglab.github.io/GAMclust/articles/GAMclust_tutorial_BULK" class="external-link">bulk RNA-seq data tutorial</a>,</li>
+<li>
+<a href="https://alserglab.github.io/GAMclust/articles/GAMclust_tutorial_SC" class="external-link">single cell RNA-seq data tutorial</a>,</li>
+<li>
+<a href="https://alserglab.github.io/GAMclust/articles/GAMclust_tutorial_SPAT" class="external-link">spatial RNA-seq data tutorial</a>.</li>
 </ul>
 </div>
-
+<div class="section level2">
+<h2 id="algorithm-overview">Algorithm overview<a class="anchor" aria-label="anchor" href="#algorithm-overview"></a>
+</h2>
+<p><img src="reference/figures/workflow.png" alt="GAMclust workflow"></p>
+<p>GAMclust identifies coordinated metabolic modules by integrating gene co-expression with the topology of the KEGG metabolic network. The algorithm first initializes <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math> representative expression patterns using k-means (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>32</mn></mrow><annotation encoding="application/x-tex">k = 32</annotation></semantics></math> by default). Then scores for each gene <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>g</mi><mi>i</mi></msub><annotation encoding="application/x-tex">g_i</annotation></semantics></math> against every pattern <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>c</mi><mi>j</mi></msub><annotation encoding="application/x-tex">c_j</annotation></semantics></math> are calculated using the following formulas:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>−</mo><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>;</mo></mrow><annotation encoding="application/x-tex">
+d\left( g_{i}, c_{j} \right) = 1 - \mathrm{cor}\left( g_{i}, c_{j} \right);
+</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mn>0</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>≡</mo><mrow><mi mathvariant="normal">b</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">e</mi></mrow><mo>;</mo></mrow><annotation encoding="application/x-tex">
+d\left( g_{i}, c_{0} \right) \equiv \mathrm{base};
+</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>d</mi><mo>′</mo></msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><munder><mi mathvariant="normal">min</mi><mrow><mi>k</mi><mo>≠</mo><mi>j</mi><mo>,</mo><mspace width="0.278em"></mspace><mi>k</mi><mo>∈</mo><mo stretchy="false" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>M</mi><mo stretchy="false" form="postfix">)</mo></mrow></munder><mrow><mo stretchy="true" form="prefix">(</mo><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mi>k</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>;</mo></mrow><annotation encoding="application/x-tex">
+d'\left( g_{i}, c_{j} \right) = \min_{k \neq j,\; k \in (0, M)} \left( d\left( g_{i}, c_{k} \right) \right);
+</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>−</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mfrac><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><msup><mi>d</mi><mo>′</mo></msup><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>g</mi><mi>i</mi></msub><mo>,</mo><msub><mi>c</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\mathrm{score}\left( g_{i}, c_{j} \right) = -\log\frac{d\left( g_{i}, c_{j} \right)}{d'\left( g_{i}, c_{j} \right)},
+</annotation></semantics></math></p>
+<p>where:</p>
+<ul>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>g</mi><mi>i</mi></msub><annotation encoding="application/x-tex">g_{i}</annotation></semantics></math> — expression of the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>-th gene, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>∈</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>,</mo><mi>N</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">i \in (1, N)</annotation></semantics></math>;</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>c</mi><mi>j</mi></msub><annotation encoding="application/x-tex">c_{j}</annotation></semantics></math> — pattern of the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>-th cluster if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>∈</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>,</mo><mi>M</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">j \in (1, M)</annotation></semantics></math> or special fake pattern if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">j = 0</annotation></semantics></math>;</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>d</mi><annotation encoding="application/x-tex">d</annotation></semantics></math> — distance to the pattern the score is being calculated for;</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>d</mi><mo>′</mo></msup><annotation encoding="application/x-tex">d'</annotation></semantics></math> — distance to the pattern which this gene has the most correlation with (all other patterns are considered except the pattern the score is being calculated for);</li>
+<li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">b</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">e</mi></mrow><annotation encoding="application/x-tex">\mathrm{base}</annotation></semantics></math> — distance to the fake pattern.</li>
+</ul>
+<p>These scores are assigned as edge weights in the metabolic network, and for each expression pattern a maximum-weight connected subgraph (MWCS) is extracted, yielding candidate metabolic modules. The patterns are then updated from the identified modules and the procedure is repeated until convergence.</p>
+<p>See the <a href="https://alserglab.github.io/GAMclust/articles/Algorithm_overview.html" class="external-link">Algorithm overview</a> for a detailed description.</p>
+</div>
+</div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
