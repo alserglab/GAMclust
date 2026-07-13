@@ -53,21 +53,25 @@ is the minimum distance to any other pattern, including the fictitious one.
 
 A positive score indicates that the gene *i* is more strongly associated with pattern *j* than with any other pattern.
 
-These scores are assigned as edge weights in the KEGG metabolic network. For every expression pattern, the algorithm identifies a maximum-weight connected subgraph using a GMWCS solver. Each connected subgraph represents a candidate metabolic module.
+These scores are assigned as edge weights in the KEGG metabolic network. For every expression pattern, the algorithm identifies a maximum-weight connected subgraph using an
+SGMWCS (signal generalized maximum-weight connected subgraph) solver. Each connected subgraph represents a candidate metabolic module.
 
 # Iterative refinement & convergence criteria
 
-Having obtained these initial candidate modules from the GMWCS solver, the algorithm proceeds to iteratively refine them. At each iteration, every expression pattern is recalculated as the averaged expression profile of all genes contributing positive scores to its module. The updated patterns are subsequently used to recompute gene scores and identify new graph-based modules. This process continues until a stable set of modules is achieved according to explicit convergence (`diff < 0.01`).
+Having obtained these initial candidate modules from the SGMWCS solver, the algorithm proceeds to iteratively refine them. At each iteration, every expression pattern is recalculated as the averaged expression profile of all genes contributing positive scores to its module. The updated patterns are subsequently used to recompute gene scores and identify new graph-based modules. This process continues until a stable set of modules is achieved according to explicit convergence
+(a matrix of scaled patterns is close to a corresponding matrix from one of the
+previous iterations with at most 0.01 element-wise absolute difference).
 
 After convergence, additional refinement steps are performed whenever necessary to ensure that the final modules remain biologically meaningful and easy to interpret:
 
-* First, excessively large modules are avoided. If any module contains more genes than specified by `max.module.size`, the parameter `base` is decreased by `base.dec` (10% by default), making module formation more permissive and allowing the oversized module to split into smaller subnetworks.
+* First, excessively large modules are avoided. If any module contains more genes than specified by `max.module.size`, the parameter `base` is decreased by `base.dec` (10% by default),
+making inclusion of genes into modules more strict.
 
 * Second, highly similar modules are subject to adjustment. If the correlation between two module expression patterns exceeds `cor.threshold`, the two most similar modules are merged.
 
 * Third, the answer should not include uninformative modules. Module informativeness is evaluated using a GESECA (GSEA-like) enrichment score which captures coordinated changes across the entire transcriptome. Module that does not pass the significance threshold (`p.adj.val.threshold`) is considered uninformative and is merged with the any other most similar module which it has the greatest gene intersection with. If there is no such similar module, the uninformative module is removed.
 
-These refinement steps are repeated until all modules satisfy the predefined quality criteria.
+These refinement steps are repeated until all modules satisfy the above quality criteria.
 
 # Parameters tuning
 
@@ -83,7 +87,7 @@ results <- gamClustering(...,
                          start.base = 0.5,
                          base.dec = 0.1,
                          max.module.size = 50,
-                         cor.threshold = 0.7,
+                         cor.threshold = 0.8,
                          p.adj.val.threshold = 1e-5)
 ```
 
