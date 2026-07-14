@@ -36,7 +36,7 @@ prepareData <- function(
   mu <- matrixStats::rowMeans2(E)
   s  <- matrixStats::rowSds(E);   s[s == 0] <- 1
   
-  if (use.PCA && use.PCA.n >= ncol(E) - 1)  {
+  if (use.PCA && use.PCA.n > ncol(E) - 1)  {
     use.PCA <- FALSE
   }
   
@@ -54,6 +54,12 @@ prepareData <- function(
     E <- t(base::scale(t(E), center = mu, scale = s))  
   }
 
+  E <- E[order(mu, decreasing = T), ]
+  
+  # remove NAs and duplicates in original names
+  E <- E[!is.na(rownames(E)), ]
+  E <- E[!duplicated(rownames(E)), ]
+  
   new2old <- rownames(E)
   
   if(is.null(gene.id.type) || gene.id.type == network.annotation$baseId){
@@ -63,6 +69,11 @@ prepareData <- function(
     if(gene.id.type %in% names(network.annotation$mapFrom)){
       
       rownames.dubl <- network.annotation$mapFrom[[gene.id.type]][rownames(E)]
+      
+      # workaround for a case of one to many mapping
+      # TODO: should properly be addressed at annotation construction
+      rownames.dubl <- rownames.dubl[!duplicated(rownames.dubl[[gene.id.type]])]
+      
       rownames(E) <- rownames.dubl$gene
       
     } else {
@@ -74,10 +85,10 @@ prepareData <- function(
   }
   names(new2old) <- rownames(E)
   
-  
-  E <- E[order(mu, decreasing = T), ]
+  # remove NAs and duplicates in new names
   E <- E[!is.na(rownames(E)), ]
   E <- E[!duplicated(rownames(E)), ]
+  
   E <- head(E, keep.top.genes)
 
   attributes(E)$original.gene.names <- new2old

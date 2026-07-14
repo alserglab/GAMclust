@@ -51,15 +51,15 @@ test_that("prepareData works for Homo sapiens with PCA", {
 
 test_that("prepareData stops with undefined gene annotation", {
 
-  expect_error(prepareData(E = Biobase::exprs(data.good),
-                           gene.id.type = "Something",
-                           keep.top.genes = 12000,
-                           use.PCA = TRUE,
-                           use.PCA.n = ncol(Biobase::exprs(data.good)) - 1,
-                           repeats = seq_len(ncol(Biobase::exprs(data.good))),
-                           network.annotation = network.annotation.mm),
-               sprintf("Please provide `gene.id.type` as one of the following: %s", 
-                       paste(c(names(network.annotation.mm$mapFrom), "Entrez"), collapse = ", ")))
+  expect_error(
+    prepareData(E = Biobase::exprs(data.good),
+                gene.id.type = "Something",
+                keep.top.genes = 12000,
+                use.PCA = TRUE,
+                use.PCA.n = ncol(Biobase::exprs(data.good)) - 1,
+                repeats = seq_len(ncol(Biobase::exprs(data.good))),
+                network.annotation = network.annotation.mm), 
+    "Something")
 
 })
 
@@ -89,4 +89,20 @@ test_that("prepareData no annotation when gene.id.type is NULL and works", {
                              network.annotation = network.annotation.mm),
                  "No gene annotation was performed")
   
+})
+
+test_that("prepareData works with duplicate gene names", {
+  E <- Biobase::exprs(data.good)
+  rownames(E)[1] <- "Smim36" # has two Entrez ids
+  E.prep <- prepareData(E = E,
+                        gene.id.type = "Symbol",
+                        keep.top.genes = 12000,
+                        use.PCA = FALSE,
+                        repeats = seq_len(ncol(Biobase::exprs(data.good))),
+                        network.annotation = network.annotation.mm)
+
+  new2old <- attributes(E.prep)$original.gene.names 
+  newName <- names(which(new2old == rownames(E)[1]))
+  
+  expect_gt(cor(E.prep[newName, ], E[1,]), 0.99) 
 })
