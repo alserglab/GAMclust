@@ -1,5 +1,5 @@
 ---
-title: 'GAM-clustering reanalysis Of metabolic Tabula Muris Senis single cell RNA-seq data'
+title: 'GAM-clustering reanalysis of Tabula Muris Senis single cell RNA-seq data'
 output:
   html_document:
     df_print: paged
@@ -31,6 +31,16 @@ knitr::opts_chunk$set(
 )
 ```
 
+### Introduction
+
+This vignette walks over application of GAM-clustering method 
+for reanalysis of metabolic regulation in Tabula Muris Senis single cell RNA-seq data
+(mononuclear phagocyte subset), originally described in [Gainullina et al](https://doi.org/0.1016/j.celrep.2023.112046).
+
+The vignette requires about an hour of computational time and 16GB of memory for completion.
+
+### Installation and libraries
+
 Install GAMclust package:
 
 ```{r, eval=FALSE}
@@ -58,7 +68,7 @@ startTime <- Sys.time()
 
 ### Preparing working environment
 
-First, please load and initialize all objects required for GAM-clustering analysis:
+First, load and initialize all objects required for GAM-clustering analysis:
 
 (1) load metabolic network and its metabolites annotation. We provide two networks: [KEGG](https://www.genome.jp/kegg/) and combined network that includes [KEGG](https://www.genome.jp/kegg/), [Rhea](https://www.rhea-db.org/) and transport reactions:
 
@@ -91,7 +101,7 @@ network.annotation <- readRDS(url("http://artyomovlab.wustl.edu/publications/sup
 met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclust"))$ID
 ```
 
-(4) initialize SMGWCS solver: 
+(4) initialize MWCS solver: 
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package, 
 
@@ -121,9 +131,7 @@ work.dir <- "results-sc"
 dir.create(work.dir, showWarnings = F, recursive = T)
 ```
 
-(6) TEMPORARY: collecting logs while developing the tool.
-
-```{r, stats, message = F, warning = F, results = "hide"}
+```{r, stats, message = F, warning = F, results = "hide", echo=FALSE}
 stats.dir <- file.path(work.dir, "stats")
 dir.create(stats.dir, showWarnings = F, recursive = T)
 
@@ -176,7 +184,7 @@ E[1:3, 1:3]
 
 Genes in your dataset may be named as Symbol, Entrez, Ensembl or RefSeq IDs. One of these names should be specified as value of `gene.id.type` parameter in `prepareData()`. 
 
-If you analyse singe cell or spatial RNA-seq data, please set `use.PCA=TRUE` in `prepareData()`.
+If you analyse singe cell or spatial RNA-seq data, set `use.PCA=TRUE` in `prepareData()`.
 
 ```{r, prepara-data}
 E.prep <- prepareData(E = E,
@@ -322,7 +330,6 @@ Seurat::DefaultAssay(seurat_object) <- "SCT"
 i <- 3
 
 Seurat::FeaturePlot(seurat_object,
-                    layer = "data",
                     reduction = "pumap",
                     order = T,
                     features = m.gene.list[[i]],

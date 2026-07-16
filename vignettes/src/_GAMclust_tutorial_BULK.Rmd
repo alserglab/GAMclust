@@ -1,5 +1,5 @@
 ---
-title: 'GAM-clustering reanalysis of ImmGen Open Source bulk RNA-Seq data'
+title: 'GAM-clustering reanalysis of ImmGen Open Source bulk RNA-seq data'
 output:
   html_document:
     df_print: paged
@@ -31,6 +31,15 @@ knitr::opts_chunk$set(
 )
 ```
 
+### Introduction
+
+This vignette walks over application of GAM-clustering method 
+for reanalysis of metabolic regulation in ImmGen Open Source bulk RNA-seq data (mononuclear phagocyte subset), originally described in [Gainullina et al](https://doi.org/0.1016/j.celrep.2023.112046).
+
+The vignette requires about an hour of computational time and 4GB of memory for completion.
+
+### Installation and libraries
+
 Install GAMclust package:
 
 ```{r, eval=FALSE}
@@ -54,7 +63,7 @@ startTime <- Sys.time()
 
 ### Preparing working environment
 
-First, please load and initialize all objects required for GAM-clustering analysis:
+First, load and initialize all objects required for GAM-clustering analysis:
 
 (1) load metabolic network and its metabolites annotation. We provide two networks: [KEGG](https://www.genome.jp/kegg/) and combined network that includes [KEGG](https://www.genome.jp/kegg/), [Rhea](https://www.rhea-db.org/) and transport reactions:
 
@@ -87,7 +96,7 @@ network.annotation <- readRDS(url("http://artyomovlab.wustl.edu/publications/sup
 met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclust"))$ID
 ```
 
-(4) initialize SMGWCS solver: 
+(4) initialize MWCS solver: 
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package, 
 
@@ -117,9 +126,8 @@ work.dir <- "results-bulk"
 dir.create(work.dir, showWarnings = F, recursive = T)
 ```
 
-(6) TEMPORARY: collecting logs while developing the tool.
-
-```{r, stats, message = F, warning = F, results = "hide"}
+```{r, stats, message = F, warning = F, results = "hide", echo=FALSE}
+# logger for debug purposes
 stats.dir <- file.path(work.dir, "stats")
 dir.create(stats.dir, showWarnings = F, recursive = T)
 
@@ -315,7 +323,7 @@ for (i in seq_along(m.gene.list)) {
 
 Example of the heatmap of the first module:
 
-```{r, fig.width=35, fig.height=7}
+```{r, heatmap-module, fig.width=35, fig.height=7}
 pheatmap::pheatmap(
   GAMclust:::normalize.rows(E[m.gene.list[[1]], , drop=F]),
   show_rownames=T, show_colnames=T)

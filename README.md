@@ -72,4 +72,4 @@ yielding candidate metabolic modules.
 The patterns are then updated from the identified modules and the procedure is 
 repeated until convergence.
 
-See the [Algorithm overview](https://alserglab.github.io/GAMclust/articles/Algorithm_overview.html) for a detailed description.
+See the [Algorithm description](https://alserglab.github.io/GAMclust/articles/Algorithm_description) for more details.
