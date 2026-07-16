@@ -1,4 +1,15 @@
-# GAM-clustering Tutorial Notebook For Spatial RNA-Seq Data
+# GAM-clustering analysis of spatial RNA-seq data
+
+### Introduction
+
+This vignette walks over application of GAM-clustering method for
+analysis of metabolic regulation in a glioblastoma sample based on the
+data from [Ravi et al](https://doi.org/10.1016/j.ccell.2022.05.009).
+
+The vignette requires about an hour of computational time and 6GB of
+memory for completion.
+
+### Installation and libraries
 
 Install GAMclust package:
 
@@ -27,8 +38,8 @@ startTime <- Sys.time()
 
 ### Preparing working environment
 
-First, please load and initialize all objects required for
-GAM-clustering analysis:
+First, load and initialize all objects required for GAM-clustering
+analysis:
 
 1.  load metabolic network and its metabolites annotation. We provide
     two networks: [KEGG](https://www.genome.jp/kegg/) and combined
@@ -86,7 +97,7 @@ network.annotation <- readRDS(url("http://artyomovlab.wustl.edu/publications/sup
 met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclust"))$ID
 ```
 
-4.  initialize SMGWCS solver:
+4.  initialize MWCS solver:
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver
 `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package,
@@ -184,8 +195,7 @@ IDs. One of these names should be specified as value of `gene.id.type`
 parameter in
 [`prepareData()`](https://github.com/alserglab/GAMclust/reference/prepareData.md).
 
-If you analyse singe cell or spatial RNA-seq data, please set
-`use.PCA=TRUE` in
+If you analyse singe cell or spatial RNA-seq data, set `use.PCA=TRUE` in
 [`prepareData()`](https://github.com/alserglab/GAMclust/reference/prepareData.md).
 
 ``` r
@@ -220,9 +230,9 @@ network.prep <- prepareNetwork(E = E.prep,
                                gene2reaction.extra = gene2reaction.extra) # for combined network
 ```
 
-    # INFO [2026-07-09 17:36:50] Global metabolite network contains 5813 edges.
+    # INFO [2026-07-16 10:27:13] Global metabolite network contains 5813 edges.
 
-    # INFO [2026-07-09 17:36:50] Largest connected component of this global network contains 1296 nodes and 4448 edges.
+    # INFO [2026-07-16 10:27:13] Largest connected component of this global network contains 1296 nodes and 4448 edges.
 
 #### Preclustering
 
@@ -242,7 +252,7 @@ cur.centers <- preClustering(E.prep = E.prep,
                              network.annotation = network.annotation)
 ```
 
-    # INFO [2026-07-09 17:36:50] 1001 metabolic genes from the analysed dataset mapped to this component.
+    # INFO [2026-07-16 10:27:13] 1001 metabolic genes from the analysed dataset mapped to this component.
 
 ``` r
 
@@ -528,7 +538,7 @@ modulesSimilarity(dir1 = work.dir,
 
 ### Session info
 
-Elapsed time: 32.4 mins.
+Elapsed time: 33.6 mins.
 
 Peak R memory usage: 4.0 GB
 
@@ -559,7 +569,7 @@ sessionInfo()
     # 
     # other attached packages:
     #  [1] future_1.70.0       futile.logger_1.4.9 Seurat_5.5.0       
-    #  [4] SeuratObject_5.4.0  sp_2.2-1            fgsea_1.37.4       
+    #  [4] SeuratObject_5.4.0  sp_2.2-1            fgsea_1.39.4       
     #  [7] mwcsr_0.1.12        gatom_1.8.4         GAMclust_0.1.0     
     # [10] data.table_1.18.4   rmarkdown_2.31     
     # 
@@ -594,17 +604,17 @@ sessionInfo()
     #  [55] jsonlite_2.0.0              progressr_0.19.0           
     #  [57] ggridges_0.5.7              survival_3.8-3             
     #  [59] systemfonts_1.3.1           tools_4.5.3                
-    #  [61] ica_1.0-3                   Rcpp_1.1.1-1.1             
+    #  [61] ica_1.0-3                   Rcpp_1.1.2                 
     #  [63] glue_1.8.1                  gridExtra_2.3              
-    #  [65] SparseArray_1.10.10         xfun_0.57                  
+    #  [65] SparseArray_1.10.10         xfun_0.60                  
     #  [67] MatrixGenerics_1.22.0       dplyr_1.2.1                
-    #  [69] withr_3.0.2                 formatR_1.14               
+    #  [69] withr_3.0.3                 formatR_1.14               
     #  [71] fastmap_1.2.0               GGally_2.4.0               
     #  [73] digest_0.6.39               R6_2.6.1                   
     #  [75] mime_0.13                   textshaping_1.0.4          
     #  [77] scattermore_1.2             rsvg_2.7.0                 
     #  [79] tensor_1.5.1                spatstat.data_3.1-9        
-    #  [81] RSQLite_3.52.0              tidyr_1.3.2                
+    #  [81] RSQLite_3.53.3              tidyr_1.3.2                
     #  [83] generics_0.1.4              httr_1.4.8                 
     #  [85] htmlwidgets_1.6.4           S4Arrays_1.10.1            
     #  [87] ggstats_0.13.0              uwot_0.2.4                 
@@ -627,7 +637,7 @@ sessionInfo()
     # [121] xtable_1.8-8                cluster_2.1.8.1            
     # [123] Rgraphviz_2.54.0            evaluate_1.0.5             
     # [125] cli_3.6.6                   compiler_4.5.3             
-    # [127] futile.options_1.0.1        rlang_1.2.0                
+    # [127] futile.options_1.0.1        rlang_1.3.0                
     # [129] crayon_1.5.3                future.apply_1.20.2        
     # [131] labeling_0.4.3              plyr_1.8.9                 
     # [133] stringi_1.8.7               viridisLite_0.4.3          
@@ -635,9 +645,9 @@ sessionInfo()
     # [137] Biostrings_2.78.0           lazyeval_0.2.3             
     # [139] spatstat.geom_3.7-3         Matrix_1.7-4               
     # [141] RcppHNSW_0.6.0              patchwork_1.3.2            
-    # [143] sparseMatrixStats_1.22.0    bit64_4.8.0                
-    # [145] ggplot2_4.0.3               KEGGREST_1.53.4            
+    # [143] sparseMatrixStats_1.22.0    bit64_4.8.2                
+    # [145] ggplot2_4.0.3               KEGGREST_1.53.5            
     # [147] shiny_1.13.0                SummarizedExperiment_1.40.0
-    # [149] ROCR_1.0-12                 igraph_2.3.2               
+    # [149] ROCR_1.0-12                 igraph_2.3.3               
     # [151] memoise_2.0.1               fastmatch_1.1-8            
     # [153] bit_4.6.0

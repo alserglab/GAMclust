@@ -81,5 +81,5 @@ then updated from the identified modules and the procedure is repeated
 until convergence.
 
 See the [Algorithm
-overview](https://alserglab.github.io/GAMclust/articles/Algorithm_overview.html)
-for a detailed description.
+description](https://alserglab.github.io/GAMclust/articles/Algorithm_description)
+for more details.

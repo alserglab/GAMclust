@@ -1,4 +1,16 @@
-# GAM-clustering reanalysis of ImmGen Open Source bulk RNA-Seq data
+# GAM-clustering reanalysis of ImmGen Open Source bulk RNA-seq data
+
+### Introduction
+
+This vignette walks over application of GAM-clustering method for
+reanalysis of metabolic regulation in ImmGen Open Source bulk RNA-seq
+data (mononuclear phagocyte subset), originally described in [Gainullina
+et al](https://doi.org/0.1016/j.celrep.2023.112046).
+
+The vignette requires about an hour of computational time and 4GB of
+memory for completion.
+
+### Installation and libraries
 
 Install GAMclust package:
 
@@ -26,8 +38,8 @@ startTime <- Sys.time()
 
 ### Preparing working environment
 
-First, please load and initialize all objects required for
-GAM-clustering analysis:
+First, load and initialize all objects required for GAM-clustering
+analysis:
 
 1.  load metabolic network and its metabolites annotation. We provide
     two networks: [KEGG](https://www.genome.jp/kegg/) and combined
@@ -85,7 +97,7 @@ network.annotation <- readRDS(url("http://artyomovlab.wustl.edu/publications/sup
 met.to.filter <- data.table::fread(system.file("mets2mask.lst", package="GAMclust"))$ID
 ```
 
-4.  initialize SMGWCS solver:
+4.  initialize MWCS solver:
 
 (4.1.) we recommend to use here either heuristic relax-and-cut solver
 `rnc_solver` from [`mwcsr`](https://github.com/ctlab/mwcsr) package,
@@ -115,28 +127,6 @@ solver <- mwcsr::virgo_solver(cplex_dir = cplex.dir)
 
 work.dir <- "results-bulk"
 dir.create(work.dir, showWarnings = F, recursive = T)
-```
-
-6.  TEMPORARY: collecting logs while developing the tool.
-
-``` r
-
-stats.dir <- file.path(work.dir, "stats")
-dir.create(stats.dir, showWarnings = F, recursive = T)
-
-setup_logger <- function(log.file.path, logger.name = "stats.logger") {
-  file.appender <- appender.file(log.file.path)
-  console.appender <- appender.console()
-  combined.appender <- function(line) {
-    file.appender(line)
-    console.appender(line)
-  }
-  flog.appender(combined.appender, name = logger.name)
-  flog.threshold(TRACE, name = logger.name)
-}
-
-log.file <- file.path(stats.dir, "log.txt")
-setup_logger(log.file.path = log.file, logger.name = "stats.logger")
 ```
 
 ### Preparing objects for the analysis
@@ -211,9 +201,9 @@ network.prep <- prepareNetwork(E = E.prep,
                                gene2reaction.extra = gene2reaction.extra) # for combined network
 ```
 
-    # INFO [2026-07-06 16:01:06] Global metabolite network contains 6583 edges.
+    # INFO [2026-07-15 10:54:50] Global metabolite network contains 6583 edges.
 
-    # INFO [2026-07-06 16:01:06] Largest connected component of this global network contains 1430 nodes and 5121 edges.
+    # INFO [2026-07-15 10:54:50] Largest connected component of this global network contains 1430 nodes and 5121 edges.
 
 #### Preclustering
 
@@ -233,7 +223,7 @@ cur.centers <- preClustering(E.prep = E.prep,
                              network.annotation = network.annotation)
 ```
 
-    # INFO [2026-07-06 16:01:06] 1160 metabolic genes from the analysed dataset mapped to this component.
+    # INFO [2026-07-15 10:54:50] 1160 metabolic genes from the analysed dataset mapped to this component.
 
 ``` r
 
@@ -347,7 +337,7 @@ getGraphs(modules = results$modules,
 
 Example of the graph of the first module:
 
-![plot of chunk unnamed-chunk-6](GAMclust_tutorial_BULK_files/m.1.svg)
+![plot of chunk example-module](GAMclust_tutorial_BULK_files/m.1.svg)
 
 ##### Get gene tables:
 
@@ -446,7 +436,7 @@ pheatmap::pheatmap(
 ```
 
 ![plot of chunk
-unnamed-chunk-8](GAMclust_tutorial_BULK_files/unnamed-chunk-8-1.png)
+heatmap-module](GAMclust_tutorial_BULK_files/heatmap-module-1.png)
 
 ##### Get annotation tables and annotation heatmap for all modules:
 
@@ -564,9 +554,9 @@ modulesSimilarity(dir1 = work.dir,
 
 ### Session info
 
-Elapsed time: 41.1 mins.
+Elapsed time: 37 mins.
 
-Peak R memory usage: 1.0 GB
+Peak R memory usage: 1.1 GB
 
 ``` r
 
@@ -594,7 +584,7 @@ sessionInfo()
     # [1] stats     graphics  grDevices utils     datasets  methods   base     
     # 
     # other attached packages:
-    # [1] futile.logger_1.4.9 fgsea_1.37.4        mwcsr_0.1.12       
+    # [1] futile.logger_1.4.9 fgsea_1.39.4        mwcsr_0.1.12       
     # [4] gatom_1.8.4         GAMclust_0.1.0      data.table_1.18.4  
     # [7] rmarkdown_2.31     
     # 
@@ -603,9 +593,9 @@ sessionInfo()
     #  [4] farver_2.1.2         blob_1.3.0           Biostrings_2.78.0   
     #  [7] S7_0.2.2             fastmap_1.2.0        GGally_2.4.0        
     # [10] XML_3.99-0.23        digest_0.6.39        lifecycle_1.0.5     
-    # [13] rsvg_2.7.0           KEGGREST_1.53.4      RSQLite_3.52.0      
-    # [16] magrittr_2.0.5       compiler_4.5.3       rlang_1.2.0         
-    # [19] tools_4.5.3          igraph_2.3.2         knitr_1.51          
+    # [13] rsvg_2.7.0           KEGGREST_1.53.5      RSQLite_3.53.3      
+    # [16] magrittr_2.0.5       compiler_4.5.3       rlang_1.3.0         
+    # [19] tools_4.5.3          igraph_2.3.3         knitr_1.51          
     # [22] lambda.r_1.2.4       htmlwidgets_1.6.4    bit_4.6.0           
     # [25] xml2_1.5.2           plyr_1.8.9           RColorBrewer_1.1-3  
     # [28] BiocParallel_1.44.0  purrr_1.2.2          BiocGenerics_0.56.0 
@@ -616,7 +606,7 @@ sessionInfo()
     # [43] cachem_1.1.0         stringr_1.6.0        parallel_4.5.3      
     # [46] AnnotationDbi_1.72.0 formatR_1.14         XVector_0.50.0      
     # [49] matrixStats_1.5.0    vctrs_0.7.3          Matrix_1.7-4        
-    # [52] IRanges_2.44.0       S4Vectors_0.48.1     bit64_4.8.0         
+    # [52] IRanges_2.44.0       S4Vectors_0.48.1     bit64_4.8.2         
     # [55] BioNet_1.70.0        Rgraphviz_2.54.0     systemfonts_1.3.1   
     # [58] tidyr_1.3.2          glue_1.8.1           ggstats_0.13.0      
     # [61] codetools_0.2-20     cowplot_1.2.0        stringi_1.8.7       
@@ -625,5 +615,5 @@ sessionInfo()
     # [70] R6_2.6.1             textshaping_1.0.4    evaluate_1.0.5      
     # [73] kableExtra_1.4.0     Biobase_2.70.0       lattice_0.22-7      
     # [76] futile.options_1.0.1 png_0.1-9            pheatmap_1.0.13     
-    # [79] memoise_2.0.1        Rcpp_1.1.1-1.1       fastmatch_1.1-8     
-    # [82] svglite_2.2.2        xfun_0.57            pkgconfig_2.0.3
+    # [79] memoise_2.0.1        Rcpp_1.1.2           fastmatch_1.1-8     
+    # [82] svglite_2.2.2        xfun_0.60            pkgconfig_2.0.3
