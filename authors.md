@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/alserglab/GAMclust/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/alserglab/GAMclust/blob/v0.1.0/DESCRIPTION)
 
 Sergushichev A (2026). *GAMclust: GAM-clustering: Metabolic Modules
 Derivig From RNAseq Data*. R package version 0.1.0,
